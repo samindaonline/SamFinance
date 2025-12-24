@@ -1,0 +1,5 @@
+{
+  "name": "SamFinance",
+  "description": "A privacy-first, local-only personal accounting application to manage bank balances, stakeholder accounts, and daily expenses.",
+  "requestFramePermissions": []
+}
