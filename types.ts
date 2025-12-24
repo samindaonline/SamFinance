@@ -7,7 +7,7 @@ export interface Transaction {
   type: TransactionType;
   accountId: string; // Source for Expense/Transfer, Target for Income
   toAccountId?: string; // Target for Transfer
-  category: string;
+  tags: string[]; // Changed from category: string to support multiple tags
   description: string;
 }
 

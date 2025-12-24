@@ -23,8 +23,8 @@ const Categories: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-           <h2 className="text-2xl font-bold text-slate-800">Categories</h2>
-           <p className="text-slate-500">Manage transaction tags and categories.</p>
+           <h2 className="text-2xl font-bold text-slate-800">Tags / Categories</h2>
+           <p className="text-slate-500">Manage transaction tags to organize your spending.</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ const Categories: React.FC = () => {
         {/* Categories Tag Cloud */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm min-h-[400px]">
              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-800">Existing Categories</h3>
+                <h3 className="text-lg font-bold text-slate-800">Existing Tags</h3>
                 <div className="relative w-64">
                     <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                     <input 

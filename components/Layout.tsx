@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, LogOut, ChevronRight } from 'lucide-react';
 import TransactionModal from './TransactionModal';
 
 interface LayoutProps {
@@ -9,85 +9,110 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'accounts' | 'transactions' | 'categories' | 'settings', icon: any, label: string }) => (
-    <button
-      onClick={() => {
-        setView(view);
-        setIsMobileMenuOpen(false);
-      }}
-      className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-        currentView === view
-          ? 'bg-blue-600 text-white shadow-md'
-          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-      }`}
-    >
-      <Icon className="w-5 h-5 mr-3" />
-      {label}
-    </button>
-  );
+  const navItems = [
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'accounts', icon: Wallet, label: 'Accounts' },
+    { id: 'transactions', icon: CreditCard, label: 'Transactions' },
+    { id: 'categories', icon: Tags, label: 'Categories' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
+  ] as const;
+
+  const handleNavClick = (view: typeof currentView) => {
+    setView(view);
+    setSidebarOpen(false);
+  };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 shadow-sm z-10">
-        <div className="flex items-center px-6 py-6">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg mr-3">
-            <PiggyBank className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">SamFinance</h1>
-        </div>
-        
-        <nav className="flex-1 px-4 space-y-2 mt-4">
-          <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem view="accounts" icon={Wallet} label="Accounts" />
-          <NavItem view="transactions" icon={CreditCard} label="Transactions" />
-          <NavItem view="categories" icon={Tags} label="Categories" />
-          <div className="pt-4 mt-4 border-t border-slate-100">
-             <NavItem view="settings" icon={Settings} label="Settings" />
-          </div>
-        </nav>
-
-        <div className="p-4 border-t border-slate-100">
-            <p className="text-xs text-slate-400 text-center">Local Data Only</p>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20">
-           <div className="flex items-center">
-             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
-               <PiggyBank className="w-5 h-5 text-white" />
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
+      {/* Top Navigation Bar */}
+      <header className="flex-none h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between z-30 shadow-sm relative">
+         <div className="flex items-center gap-3">
+             <button 
+                onClick={() => setSidebarOpen(true)} 
+                className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100"
+                aria-label="Open menu"
+             >
+                <Menu className="w-6 h-6" />
+             </button>
+             <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-blue-200">
+                    <PiggyBank className="w-5 h-5" />
+                 </div>
+                 <h1 className="text-lg font-bold text-slate-800 tracking-tight hidden sm:block">SamFinance</h1>
              </div>
-             <span className="font-bold text-slate-800">SamFinance</span>
-           </div>
-           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600">
-             {isMobileMenuOpen ? <X /> : <Menu />}
-           </button>
-        </header>
+         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-14 left-0 w-full bg-white border-b border-slate-200 shadow-xl z-30 p-4 space-y-2">
-            <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-            <NavItem view="accounts" icon={Wallet} label="Accounts" />
-            <NavItem view="transactions" icon={CreditCard} label="Transactions" />
-            <NavItem view="categories" icon={Tags} label="Categories" />
-            <NavItem view="settings" icon={Settings} label="Settings" />
+         <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200">
+                Local Vault
+            </span>
+         </div>
+      </header>
+
+      {/* Slide-out Drawer / Sidebar */}
+      <div 
+        className={`fixed inset-0 z-40 transition-visibility duration-300 ${isSidebarOpen ? 'visible' : 'invisible'}`}
+      >
+          {/* Backdrop */}
+          <div 
+            className={`absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={() => setSidebarOpen(false)}
+          />
+
+          {/* Sidebar Content */}
+          <div 
+            className={`absolute top-0 left-0 bottom-0 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          >
+              <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+                  <span className="font-bold text-lg text-slate-800">Menu</span>
+                  <button 
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+                  >
+                      <X className="w-5 h-5" />
+                  </button>
+              </div>
+
+              <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+                  {navItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group ${
+                            currentView === item.id
+                                ? 'bg-blue-50 text-blue-700 font-semibold'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                        }`}
+                      >
+                          <div className="flex items-center">
+                              <item.icon className={`w-5 h-5 mr-3 transition-colors ${currentView === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                              {item.label}
+                          </div>
+                          {currentView === item.id && <ChevronRight className="w-4 h-4 text-blue-500" />}
+                      </button>
+                  ))}
+              </nav>
+
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                  <div className="bg-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-200">
+                      <h4 className="font-bold text-sm mb-1">Secure & Local</h4>
+                      <p className="text-xs text-blue-100 leading-relaxed">
+                          Your financial data never leaves this device. 
+                      </p>
+                  </div>
+              </div>
           </div>
-        )}
+      </div>
 
-        {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-5xl mx-auto w-full">
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto relative scroll-smooth">
+          <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
             {children}
           </div>
-        </main>
-      </div>
-      
+      </main>
+
       {/* Global Transaction Modal */}
       <TransactionModal />
     </div>

@@ -16,7 +16,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Load initial data
   useEffect(() => {
     const loadedAccounts = storage.accounts.load(DEFAULT_ACCOUNTS);
-    const loadedTransactions = storage.transactions.load([]);
+    
+    // Migration: Handle legacy transactions that might have 'category' instead of 'tags'
+    const rawTransactions = storage.transactions.load([]);
+    const loadedTransactions = rawTransactions.map((t: any) => ({
+        ...t,
+        tags: Array.isArray(t.tags) ? t.tags : (t.category ? [t.category] : [])
+    }));
+
     const loadedCategories = storage.categories.load(DEFAULT_CATEGORIES);
     const loadedCurrency = storage.currency.load('LKR');
     
@@ -94,12 +101,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const formatCurrency = useCallback((amount: number) => {
     const currObj = CURRENCIES.find(c => c.code === currency);
     const symbol = currObj ? currObj.symbol : currency;
-    
-    // Check if we should use space. Usually symbols like $ don't have space, LKR does.
-    // For simplicity, let's keep it consistent.
-    // If symbol is > 1 char (like LKR, Rs, AED), add space.
     const separator = symbol.length > 1 ? ' ' : '';
-    
     return `${symbol}${separator}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }, [currency]);
 
