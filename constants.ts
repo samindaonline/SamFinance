@@ -16,19 +16,7 @@ export const COLORS = [
 export const DEFAULT_CATEGORIES = [
   'Food & Dining',
   'Transportation',
-  'Housing',
-  'Utilities',
-  'Healthcare',
-  'Personal Care',
-  'Entertainment',
-  'Shopping',
-  'Education',
-  'Debt',
-  'Savings',
-  'Salary',
-  'Business',
-  'Gift',
-  'Other'
+  'Salary'
 ];
 
 export const DEFAULT_ACCOUNTS: Account[] = [
