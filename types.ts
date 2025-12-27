@@ -43,12 +43,35 @@ export interface Receivable {
   type: 'ONE_TIME' | 'RECURRING';
 }
 
+export interface BudgetInstallment {
+  id: string;
+  date: string;
+  amount: number;
+  accountId: string; // Account used for this specific installment
+}
+
+export interface BudgetItem {
+  id: string;
+  name: string;
+  link?: string;
+  totalPrice: number;
+  installments: BudgetInstallment[];
+}
+
+export interface BudgetProject {
+  id: string;
+  name: string;
+  createdAt: string;
+  items: BudgetItem[];
+}
+
 export interface FinanceContextType {
   accounts: Account[];
   transactions: Transaction[];
   categories: string[];
   liabilities: Liability[];
   receivables: Receivable[];
+  budgetProjects: BudgetProject[];
   addAccount: (account: Omit<Account, 'id'>) => void;
   updateAccount: (id: string, account: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
@@ -62,6 +85,9 @@ export interface FinanceContextType {
   addReceivable: (receivable: Omit<Receivable, 'id' | 'status'>) => void;
   toggleReceivableStatus: (id: string) => void;
   deleteReceivable: (id: string) => void;
+  addBudgetProject: (name: string) => void;
+  updateBudgetProject: (project: BudgetProject) => void;
+  deleteBudgetProject: (id: string) => void;
   getAccountBalance: (accountId: string) => number;
   totalNetWorth: number;
   isTransactionModalOpen: boolean;

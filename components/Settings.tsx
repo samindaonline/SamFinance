@@ -5,7 +5,7 @@ import { Coins, Check, Download, Upload, FileJson } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Settings: React.FC = () => {
-  const { currency, setCurrency, accounts, transactions, categories, liabilities, receivables, importData } = useFinance();
+  const { currency, setCurrency, accounts, transactions, categories, liabilities, receivables, budgetProjects, importData } = useFinance();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -17,7 +17,8 @@ const Settings: React.FC = () => {
         transactions,
         categories,
         liabilities,
-        receivables
+        receivables,
+        budgetProjects
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

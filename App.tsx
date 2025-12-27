@@ -8,8 +8,9 @@ import Categories from './components/Categories';
 import Settings from './components/Settings';
 import Liabilities from './components/Liabilities';
 import Receivables from './components/Receivables';
+import Budget from './components/Budget';
 
-type View = 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings';
+type View = 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -28,6 +29,8 @@ const App: React.FC = () => {
         return <Receivables />;
       case 'categories':
         return <Categories />;
+      case 'budget':
+        return <Budget />;
       case 'settings':
         return <Settings />;
       default:

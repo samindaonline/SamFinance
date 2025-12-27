@@ -4,6 +4,7 @@ const STORAGE_KEY_CATEGORIES = 'ls_categories';
 const STORAGE_KEY_CURRENCY = 'ls_currency';
 const STORAGE_KEY_LIABILITIES = 'ls_liabilities';
 const STORAGE_KEY_RECEIVABLES = 'ls_receivables';
+const STORAGE_KEY_BUDGETS = 'ls_budgets';
 
 export const saveToStorage = <T,>(key: string, data: T): void => {
   try {
@@ -47,5 +48,9 @@ export const storage = {
   receivables: {
     save: (data: any[]) => saveToStorage(STORAGE_KEY_RECEIVABLES, data),
     load: (defaultValue: any[]) => loadFromStorage(STORAGE_KEY_RECEIVABLES, defaultValue)
+  },
+  budgets: {
+    save: (data: any[]) => saveToStorage(STORAGE_KEY_BUDGETS, data),
+    load: (defaultValue: any[]) => loadFromStorage(STORAGE_KEY_BUDGETS, defaultValue)
   }
 };

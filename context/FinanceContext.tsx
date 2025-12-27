@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Account, Transaction, Liability, Receivable, FinanceContextType } from '../types';
+import { Account, Transaction, Liability, Receivable, BudgetProject, FinanceContextType } from '../types';
 import { storage } from '../utils/storage';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, CURRENCIES } from '../constants';
 
@@ -11,6 +11,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [categories, setCategories] = useState<string[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [budgetProjects, setBudgetProjects] = useState<BudgetProject[]>([]);
   const [currency, setCurrencyState] = useState<string>('LKR');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
@@ -41,12 +42,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
 
     const loadedReceivables = storage.receivables.load([]);
+    const loadedBudgets = storage.budgets.load([]);
     
     setAccounts(loadedAccounts);
     setTransactions(loadedTransactions);
     setCategories(loadedCategories);
     setLiabilities(loadedLiabilities);
     setReceivables(loadedReceivables);
+    setBudgetProjects(loadedBudgets);
     setCurrencyState(loadedCurrency);
     setIsLoaded(true);
   }, []);
@@ -60,8 +63,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       storage.currency.save(currency);
       storage.liabilities.save(liabilities);
       storage.receivables.save(receivables);
+      storage.budgets.save(budgetProjects);
     }
-  }, [accounts, transactions, categories, currency, liabilities, receivables, isLoaded]);
+  }, [accounts, transactions, categories, currency, liabilities, receivables, budgetProjects, isLoaded]);
 
   const addAccount = (account: Omit<Account, 'id'>) => {
     const newAccount: Account = {
@@ -139,6 +143,24 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setReceivables(prev => prev.filter(r => r.id !== id));
   };
 
+  const addBudgetProject = (name: string) => {
+    const newProject: BudgetProject = {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        items: []
+    };
+    setBudgetProjects(prev => [newProject, ...prev]);
+  };
+
+  const updateBudgetProject = (project: BudgetProject) => {
+      setBudgetProjects(prev => prev.map(p => p.id === project.id ? project : p));
+  };
+
+  const deleteBudgetProject = (id: string) => {
+      setBudgetProjects(prev => prev.filter(p => p.id !== id));
+  };
+
   const setCurrency = (c: string) => {
     setCurrencyState(c);
   };
@@ -162,6 +184,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         storage.categories.save(Array.isArray(data.categories) ? data.categories : DEFAULT_CATEGORIES);
         storage.liabilities.save(Array.isArray(data.liabilities) ? data.liabilities : []);
         storage.receivables.save(Array.isArray(data.receivables) ? data.receivables : []);
+        storage.budgets.save(Array.isArray(data.budgetProjects) ? data.budgetProjects : []);
         
         if (data.currency) {
             storage.currency.save(data.currency);
@@ -233,6 +256,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     categories,
     liabilities,
     receivables,
+    budgetProjects,
     addAccount,
     updateAccount,
     deleteAccount,
@@ -246,6 +270,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addReceivable,
     toggleReceivableStatus,
     deleteReceivable,
+    addBudgetProject,
+    updateBudgetProject,
+    deleteBudgetProject,
     getAccountBalance,
     totalNetWorth,
     isTransactionModalOpen,
