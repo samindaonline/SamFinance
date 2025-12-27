@@ -19,6 +19,7 @@ export interface Account {
   color: string;
   parentAccountId?: string;
   includeInNetWorth?: boolean;
+  description?: string;
 }
 
 export interface FinanceContextType {

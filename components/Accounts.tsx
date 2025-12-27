@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Plus, Trash2, Wallet, User, Building, Edit2, CreditCard, Landmark, Check, AlertTriangle, ChevronDown, Layers, X } from 'lucide-react';
+import { Plus, Trash2, Wallet, User, Building, Edit2, CreditCard, Landmark, Check, AlertTriangle, ChevronDown, Layers, X, AlignLeft } from 'lucide-react';
 import { COLORS, DEFAULT_ACCOUNTS } from '../constants';
 import { Account } from '../types';
 
@@ -50,6 +50,9 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                     </div>
                     <div className="min-w-0">
                         <h3 className="font-bold text-slate-800 text-lg truncate">{account.name}</h3>
+                        {account.description && (
+                            <p className="text-sm text-slate-500 truncate mb-1">{account.description}</p>
+                        )}
                         <div className="flex items-center gap-2 mt-0.5">
                              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wide border border-slate-200">
                                 {account.type}
@@ -156,6 +159,9 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
 
                 <div className="min-w-0">
                      <div className="font-semibold text-slate-700 text-sm truncate">{account.name}</div>
+                     {account.description && (
+                         <div className="text-xs text-slate-400 truncate max-w-[200px]">{account.description}</div>
+                     )}
                      {children.length > 0 && (
                          <div className="text-[10px] text-slate-400 font-medium">{children.length} sub-accounts</div>
                      )}
@@ -222,6 +228,7 @@ const Accounts: React.FC = () => {
   
   // Form State
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [type, setType] = useState<Account['type']>('BANK');
   const [initialBalance, setInitialBalance] = useState('');
   const [color, setColor] = useState(COLORS[0]);
@@ -232,6 +239,7 @@ const Accounts: React.FC = () => {
     e.preventDefault();
     const payload = {
         name,
+        description,
         type,
         color,
         initialBalance: Number(initialBalance),
@@ -249,6 +257,7 @@ const Accounts: React.FC = () => {
 
   const resetForm = () => {
     setName('');
+    setDescription('');
     setType('BANK');
     setInitialBalance('');
     setColor(COLORS[0]);
@@ -261,6 +270,7 @@ const Accounts: React.FC = () => {
   const openEdit = (acc: Account) => {
       setEditingId(acc.id);
       setName(acc.name);
+      setDescription(acc.description || '');
       setType(acc.type);
       setInitialBalance(acc.initialBalance.toString());
       setColor(acc.color);
@@ -341,6 +351,16 @@ const Accounts: React.FC = () => {
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white"
                   placeholder="e.g. Chase Checkings"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white resize-none h-20"
+                  placeholder="What is this account for?"
                 />
               </div>
 
