@@ -9,9 +9,10 @@ const Settings: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReset = () => {
-    if (confirm("WARNING: This will delete ALL transactions and ALL accounts except the default Main Bank Account and Wallet. This action cannot be undone. Are you sure?")) {
+    if (window.confirm("WARNING: This will delete ALL transactions, liabilities, receivables, and accounts (resetting to defaults). This action cannot be undone. Are you sure?")) {
         resetData();
-        alert("Data has been reset.");
+        // Optional: Provide feedback
+        // alert("Data has been reset.");
     }
   };
 
@@ -50,12 +51,12 @@ const Settings: React.FC = () => {
       reader.onload = (event) => {
           const content = event.target?.result as string;
           if (content) {
-              if (confirm("This will overwrite your current data with the data from the file. Are you sure you want to proceed?")) {
+              if (window.confirm("This will overwrite your current data with the data from the file. Are you sure you want to proceed?")) {
                   const success = importData(content);
                   if (success) {
                       alert("Data imported successfully!");
                   } else {
-                      alert("Failed to import data. The file might be corrupted or in an invalid format.");
+                      alert("Failed to import data. Please check the file format.");
                   }
               }
           }
@@ -168,10 +169,10 @@ const Settings: React.FC = () => {
                 className="w-full sm:w-auto flex items-center justify-center px-4 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all font-medium"
             >
                 <Trash2 className="w-5 h-5 mr-3" />
-                Reset Data (Keep Main Accounts)
+                Reset Data
             </button>
             <p className="mt-2 text-xs text-slate-400">
-                This will delete all transactions and created accounts, but will preserve the default "Main Bank Account" and "Wallet".
+                This will delete all transactions, liabilities, receivables, and accounts (resetting to defaults), but will preserve the default "Main Bank Account" and "Wallet".
             </p>
         </div>
       </div>

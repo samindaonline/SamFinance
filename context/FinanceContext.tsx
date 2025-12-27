@@ -14,7 +14,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [currency, setCurrencyState] = useState<string>('LKR');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
-
+  
   // Load initial data
   useEffect(() => {
     const loadedAccounts = storage.accounts.load(DEFAULT_ACCOUNTS);
@@ -29,7 +29,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const loadedCategories = storage.categories.load(DEFAULT_CATEGORIES);
     const loadedCurrency = storage.currency.load('LKR');
     
-    // Migration: Handle legacy liabilities (title -> name, add description)
+    // Migration: Handle legacy liabilities
     const rawLiabilities = storage.liabilities.load([]);
     const loadedLiabilities = rawLiabilities.map((l: any) => ({
         ...l,
@@ -140,17 +140,28 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCurrencyState(c);
   };
 
-  const resetData = () => {
-    // Restore default accounts, clear transactions, restore default categories
-    setAccounts(DEFAULT_ACCOUNTS);
+  const resetData = useCallback(() => {
+    // Deep copy defaults to ensure clean state
+    const defaultAccounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+    const defaultCategories = [...DEFAULT_CATEGORIES];
+
+    // Update State - this will trigger the useEffect to save to localStorage
+    setAccounts(defaultAccounts);
     setTransactions([]);
-    setCategories(DEFAULT_CATEGORIES);
+    setCategories(defaultCategories);
     setLiabilities([]);
     setReceivables([]);
-    // We preserve the currency setting as that's a preference
-  };
+    
+    // Explicitly save to storage as well to ensure persistence immediately
+    // This is redundant with useEffect but adds a layer of safety against race conditions during rapid state changes
+    storage.accounts.save(defaultAccounts);
+    storage.transactions.save([]);
+    storage.categories.save(defaultCategories);
+    storage.liabilities.save([]);
+    storage.receivables.save([]);
+  }, []);
 
-  const importData = (jsonString: string): boolean => {
+  const importData = useCallback((jsonString: string): boolean => {
     try {
         const data = JSON.parse(jsonString);
         
@@ -160,33 +171,39 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             return false;
         }
 
+        const newCategories = Array.isArray(data.categories) ? data.categories : DEFAULT_CATEGORIES;
+        const newLiabilities = Array.isArray(data.liabilities) ? data.liabilities.map((l: any) => ({
+            ...l,
+            name: l.name || l.title || 'Untitled Liability',
+            description: l.description || ''
+        })) : [];
+        const newReceivables = Array.isArray(data.receivables) ? data.receivables : [];
+
+        // Update State
         setAccounts(data.accounts);
         setTransactions(data.transactions);
-        if (Array.isArray(data.categories)) {
-            setCategories(data.categories);
-        }
-        if (Array.isArray(data.liabilities)) {
-            // Handle migration for imported liabilities as well if they are from an older version
-            const importedLiabilities = data.liabilities.map((l: any) => ({
-                ...l,
-                name: l.name || l.title || 'Untitled Liability',
-                description: l.description || ''
-            }));
-            setLiabilities(importedLiabilities);
-        }
-        if (Array.isArray(data.receivables)) {
-            setReceivables(data.receivables);
-        }
-        if (data.currency && typeof data.currency === 'string') {
+        setCategories(newCategories);
+        setLiabilities(newLiabilities);
+        setReceivables(newReceivables);
+        
+        if (data.currency) {
             setCurrencyState(data.currency);
         }
+
+        // Explicit save
+        storage.accounts.save(data.accounts);
+        storage.transactions.save(data.transactions);
+        storage.categories.save(newCategories);
+        storage.liabilities.save(newLiabilities);
+        storage.receivables.save(newReceivables);
+        if (data.currency) storage.currency.save(data.currency);
 
         return true;
     } catch (error) {
         console.error("Failed to parse import data", error);
         return false;
     }
-  };
+  }, []);
 
   const formatCurrency = useCallback((amount: number) => {
     const currObj = CURRENCIES.find(c => c.code === currency);
