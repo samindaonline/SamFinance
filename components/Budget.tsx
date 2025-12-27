@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
-import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, Save, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DatePicker from './DatePicker';
@@ -14,14 +14,14 @@ const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDel
     const itemCount = project.items.length;
 
     return (
-        <div onClick={onClick} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group relative">
+        <div onClick={onClick} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group relative hover:-translate-y-1">
             <div className="flex justify-between items-start mb-3">
-                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl transition-colors group-hover:bg-indigo-100">
                     <Calculator className="w-6 h-6" />
                 </div>
                 <button 
                     onClick={onDelete}
-                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
                 >
                     <Trash2 className="w-5 h-5" />
                 </button>
@@ -69,7 +69,13 @@ const Budget: React.FC = () => {
   
   // Creation Modal State
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+
+  useEffect(() => {
+      if(isCreateModalOpen) setCreateModalVisible(true);
+      else setTimeout(() => setCreateModalVisible(false), 200);
+  }, [isCreateModalOpen]);
 
   // Editor State
   const [items, setItems] = useState<BudgetItem[]>([]);
@@ -114,15 +120,29 @@ const Budget: React.FC = () => {
       setView('detail');
   };
 
-  const handleSaveProject = () => {
-      if(activeProject) {
+  const handleBackToList = () => {
+      // Force save before exiting
+      if (activeProject) {
           updateBudgetProject({
               ...activeProject,
               items: items
           });
-          alert('Project saved successfully!');
       }
+      setView('list');
   };
+
+  // Auto-save effect
+  useEffect(() => {
+    if (activeProject) {
+      const timer = setTimeout(() => {
+        updateBudgetProject({
+          ...activeProject,
+          items: items
+        });
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [items, activeProject, updateBudgetProject]);
 
   const deleteProject = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -420,13 +440,14 @@ const Budget: React.FC = () => {
       return (
           <div className="space-y-6 pb-20 md:pb-0">
                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="animate-slide-up">
                         <h2 className="text-2xl font-bold text-slate-800">Budget Estimations</h2>
                         <p className="text-slate-500 text-sm">Plan big purchases and check affordability.</p>
                     </div>
                     <button
                         onClick={() => setCreateModalOpen(true)}
-                        className="flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
+                        className="flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-200 animate-slide-up"
+                        style={{ animationDelay: '50ms' }}
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Create Forecast
@@ -434,17 +455,18 @@ const Budget: React.FC = () => {
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {budgetProjects.map(project => (
-                        <ProjectCard 
-                            key={project.id} 
-                            project={project} 
-                            onClick={() => openProject(project)} 
-                            onDelete={(e) => deleteProject(project.id, e)}
-                            formatCurrency={formatCurrency}
-                        />
+                    {budgetProjects.map((project, idx) => (
+                        <div key={project.id} className="animate-slide-up" style={{ animationDelay: `${idx * 50}ms` }}>
+                            <ProjectCard 
+                                project={project} 
+                                onClick={() => openProject(project)} 
+                                onDelete={(e) => deleteProject(project.id, e)}
+                                formatCurrency={formatCurrency}
+                            />
+                        </div>
                     ))}
                     {budgetProjects.length === 0 && (
-                        <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                        <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 animate-fade-in">
                             <Calculator className="w-12 h-12 text-slate-300 mb-4" />
                             <p className="font-bold text-slate-600">No forecasts yet</p>
                             <p className="text-sm">Create a new project to start estimating costs.</p>
@@ -453,9 +475,10 @@ const Budget: React.FC = () => {
                </div>
 
                {/* Create Modal */}
-               {isCreateModalOpen && createPortal(
-                   <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                       <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+               {(isCreateModalVisible || isCreateModalOpen) && createPortal(
+                   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isCreateModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setCreateModalOpen(false)} />
+                        <div className={`bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl z-10 relative ${isCreateModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                            <h3 className="text-lg font-bold text-slate-800 mb-4">New Forecast Project</h3>
                            <form onSubmit={handleCreateProject}>
                                <label className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
@@ -469,8 +492,8 @@ const Budget: React.FC = () => {
                                     required
                                />
                                <div className="flex justify-end gap-3">
-                                   <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">Create</button>
+                                   <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">Cancel</button>
+                                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">Create</button>
                                </div>
                            </form>
                        </div>
@@ -483,11 +506,11 @@ const Budget: React.FC = () => {
 
   // --- Detail View ---
   return (
-      <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col">
+      <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col animate-slide-up">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
               <div className="flex items-center gap-3">
-                  <button onClick={() => setView('list')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                  <button onClick={handleBackToList} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 active:scale-90 duration-200">
                       <ArrowLeft className="w-5 h-5" />
                   </button>
                   <div>
@@ -495,13 +518,9 @@ const Budget: React.FC = () => {
                       <p className="text-slate-500 text-xs">Edit items and payment plans to see impact.</p>
                   </div>
               </div>
-              <button 
-                onClick={handleSaveProject}
-                className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-900 shadow-sm"
-              >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-              </button>
+              <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                  Auto-saving enabled
+              </div>
           </div>
 
           <div className="flex flex-col xl:flex-row gap-8">
@@ -516,7 +535,7 @@ const Budget: React.FC = () => {
                           const isExpanded = expandedItemIds.has(item.id);
 
                           return (
-                            <div key={item.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div key={item.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300">
                                 <div className="p-4 flex justify-between items-start bg-slate-50/50 border-b border-slate-100">
                                     <div className="min-w-0 pr-4">
                                         <div className="flex items-center gap-2">
@@ -534,44 +553,46 @@ const Budget: React.FC = () => {
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                         <button 
                                             onClick={() => deleteItem(item.id)} 
-                                            className="text-slate-400 hover:text-rose-500 p-1"
+                                            className="text-slate-400 hover:text-rose-500 p-1 active:scale-90 duration-200"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                         <button 
                                             onClick={() => toggleItemExpansion(item.id)}
-                                            className="text-slate-400 hover:text-slate-600 p-1"
+                                            className="text-slate-400 hover:text-slate-600 p-1 active:scale-90 duration-200"
                                         >
-                                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                            <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                <ChevronDown className="w-4 h-4" />
+                                            </div>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Payment Configuration Area */}
-                                <div className="p-4">
-                                    {editingItemId === item.id ? (
-                                        <div className="bg-indigo-50 rounded-xl p-4 animate-in fade-in">
-                                            <h5 className="font-bold text-indigo-900 text-sm mb-3">Configure Payments</h5>
-                                            <PaymentBuilder 
-                                                totalPrice={item.totalPrice} 
-                                                existingInstallments={item.installments}
-                                                accounts={accounts}
-                                                onSave={(newInstallments) => {
-                                                    updateItemInstallments(item.id, newInstallments);
-                                                    setEditingItemId(null);
-                                                    // Auto-expand after saving to show results
-                                                    const newSet = new Set(expandedItemIds);
-                                                    newSet.add(item.id);
-                                                    setExpandedItemIds(newSet);
-                                                }}
-                                                onCancel={() => setEditingItemId(null)}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            {item.installments.length > 0 ? (
-                                                <>
-                                                    {isExpanded ? (
+                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded || editingItemId === item.id ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                    <div className="p-4">
+                                        {editingItemId === item.id ? (
+                                            <div className="bg-indigo-50 rounded-xl p-4 animate-fade-in">
+                                                <h5 className="font-bold text-indigo-900 text-sm mb-3">Configure Payments</h5>
+                                                <PaymentBuilder 
+                                                    totalPrice={item.totalPrice} 
+                                                    existingInstallments={item.installments}
+                                                    accounts={accounts}
+                                                    onSave={(newInstallments) => {
+                                                        updateItemInstallments(item.id, newInstallments);
+                                                        setEditingItemId(null);
+                                                        // Auto-expand after saving to show results
+                                                        const newSet = new Set(expandedItemIds);
+                                                        newSet.add(item.id);
+                                                        setExpandedItemIds(newSet);
+                                                    }}
+                                                    onCancel={() => setEditingItemId(null)}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                {item.installments.length > 0 ? (
+                                                    <>
                                                         <div className="space-y-2 mb-3">
                                                             {item.installments.map(inst => {
                                                                 const acc = accounts.find(a => a.id === inst.accountId);
@@ -589,34 +610,30 @@ const Budget: React.FC = () => {
                                                                 );
                                                             })}
                                                         </div>
-                                                    ) : (
-                                                        <div className="text-xs text-slate-400 mb-3 italic">
-                                                            {item.installments.length} installments configured. Expand to view.
+                                                        
+                                                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-100">
+                                                            <div className={`text-xs font-bold ${isFullyConfigured ? 'text-emerald-600' : 'text-amber-500'}`}>
+                                                                {isFullyConfigured ? 'Fully Allocation' : `Remaining: ${formatCurrency(item.totalPrice - configuredAmount)}`}
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => setEditingItemId(item.id)}
+                                                                className="text-xs font-semibold text-indigo-600 hover:underline"
+                                                            >
+                                                                Edit Plan
+                                                            </button>
                                                         </div>
-                                                    )}
-                                                    
-                                                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-100">
-                                                        <div className={`text-xs font-bold ${isFullyConfigured ? 'text-emerald-600' : 'text-amber-500'}`}>
-                                                            {isFullyConfigured ? 'Fully Allocation' : `Remaining: ${formatCurrency(item.totalPrice - configuredAmount)}`}
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => setEditingItemId(item.id)}
-                                                            className="text-xs font-semibold text-indigo-600 hover:underline"
-                                                        >
-                                                            Edit Plan
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => setEditingItemId(item.id)}
-                                                    className="w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-500 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors"
-                                                >
-                                                    Configure Payment Plan
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
+                                                    </>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => setEditingItemId(item.id)}
+                                                        className="w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-500 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors"
+                                                    >
+                                                        Configure Payment Plan
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                           );
@@ -650,14 +667,14 @@ const Budget: React.FC = () => {
                       <button 
                         onClick={addItemToProject}
                         disabled={!newItemName || !newItemPrice}
-                        className="w-full py-2 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl hover:bg-white hover:text-indigo-600 hover:border-indigo-300 transition-colors disabled:opacity-50"
+                        className="w-full py-2 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl hover:bg-white hover:text-indigo-600 hover:border-indigo-300 transition-colors disabled:opacity-50 active:scale-95 duration-200"
                       >
                           Add Item
                       </button>
                   </div>
 
                   {chartData.length > 0 && (
-                        <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{animationDelay: '100ms'}}>
                             <h3 className="font-bold text-slate-800 mb-6 flex items-center">
                                 <TrendingDown className="w-5 h-5 mr-2 text-slate-500" />
                                 Projected Minimum Balances
@@ -711,6 +728,7 @@ const Budget: React.FC = () => {
                                                     stroke={color} 
                                                     fill={`url(#color-${accId})`}
                                                     strokeWidth={2}
+                                                    animationDuration={1500}
                                                 />
                                             );
                                         })}
@@ -764,7 +782,7 @@ const Budget: React.FC = () => {
                                               const isProject = event.type === 'PROJECT';
                                               
                                               return (
-                                                  <tr key={`${event.id}-${idx}`} className="hover:bg-slate-50 transition-colors">
+                                                  <tr key={`${event.id}-${idx}`} className="hover:bg-slate-50 transition-colors animate-fade-in" style={{animationDelay: `${idx * 20}ms`}}>
                                                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                                                           {format(event.date, 'MMM dd, yyyy')}
                                                           {event.isRecurring && (
@@ -830,7 +848,7 @@ const Budget: React.FC = () => {
                               if(!account) return null;
 
                               return (
-                                  <div key={accId} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                  <div key={accId} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-slide-up">
                                       <div className="p-3 bg-slate-50 border-b border-slate-100 font-bold text-slate-700 flex items-center gap-2">
                                           <div className="w-3 h-3 rounded-full" style={{backgroundColor: account.color}} />
                                           {account.name}
@@ -858,12 +876,12 @@ const Budget: React.FC = () => {
                               );
                           })
                       ) : (
-                          <div className="bg-white p-6 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-sm">
+                          <div className="bg-white p-6 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-sm animate-fade-in">
                               Add items and configure payment plans to see projected account balances.
                           </div>
                       )}
 
-                      <div className="bg-blue-50 p-4 rounded-xl text-blue-800 text-xs leading-relaxed border border-blue-100">
+                      <div className="bg-blue-50 p-4 rounded-xl text-blue-800 text-xs leading-relaxed border border-blue-100 animate-fade-in">
                           <AlertTriangle className="w-4 h-4 mb-2 inline-block mr-1" />
                           <strong>Note:</strong> Projections include all current recurring income and pending bills, plus the installments defined here.
                       </div>
@@ -956,7 +974,7 @@ const PaymentBuilder: React.FC<{
 
             <div className="space-y-3">
                 {installments.map((inst, idx) => (
-                    <div key={inst.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg md:bg-transparent md:p-0">
+                    <div key={inst.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg md:bg-transparent md:p-0 animate-fade-in" style={{animationDelay: `${idx * 50}ms`}}>
                         <div className="col-span-1 text-xs font-bold text-slate-400">#{idx + 1}</div>
                         
                         <div className="col-span-11 md:col-span-4">
@@ -1011,11 +1029,11 @@ const PaymentBuilder: React.FC<{
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-                <button onClick={onCancel} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-lg">Cancel</button>
+                <button onClick={onCancel} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-lg active:scale-95 duration-200">Cancel</button>
                 <button 
                     onClick={() => onSave(installments)} 
                     disabled={!isValid}
-                    className="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 active:scale-95 duration-200"
                 >
                     Confirm Plan
                 </button>

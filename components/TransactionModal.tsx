@@ -87,11 +87,11 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full px-4 py-2.5 bg-white border rounded-xl flex items-center justify-between transition-all outline-none ${isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-300 hover:border-blue-300'}`}
+                className={`w-full px-4 py-2.5 bg-white border rounded-xl flex items-center justify-between transition-all outline-none active:scale-[0.99] duration-100 ${isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-300 hover:border-blue-300'}`}
             >
                 {selectedAccount ? (
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white flex-shrink-0 shadow-sm" style={{ backgroundColor: selectedAccount.color }}>
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white flex-shrink-0 shadow-sm transition-transform duration-300" style={{ backgroundColor: selectedAccount.color }}>
                             {getAccountIcon(selectedAccount.type)}
                         </div>
                         <span className="text-slate-800 font-medium truncate">{selectedAccount.name}</span>
@@ -109,7 +109,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-100 overflow-hidden flex flex-col max-h-[300px]">
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl animate-zoom-in overflow-hidden flex flex-col max-h-[300px]">
                     {/* Search Bar */}
                     <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0 z-10">
                         <div className="relative">
@@ -120,7 +120,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
                                 placeholder="Search accounts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white"
+                                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white transition-colors"
                             />
                         </div>
                     </div>
@@ -147,7 +147,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
                                         >
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div 
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform" 
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform duration-200" 
                                                     style={{ backgroundColor: acc.color }}
                                                 >
                                                     {getAccountIcon(acc.type)}
@@ -164,7 +164,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
                                                 </div>
                                             </div>
                                             {selectedId === acc.id && (
-                                                <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                                <Check className="w-4 h-4 text-blue-600 flex-shrink-0 animate-zoom-in" />
                                             )}
                                         </button>
                                     ))}
@@ -203,23 +203,31 @@ const TransactionModal: React.FC = () => {
   const [description, setDescription] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
 
-  // Reset and set defaults when modal opens
+  // Animation State
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Handle open/close animation lifecycle
   useEffect(() => {
     if (isTransactionModalOpen) {
+      setIsVisible(true);
+      // Reset form when opening
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setAmount('');
       setDescription('');
       setSelectedTags([]);
       if (accounts.length > 0) {
         setAccountId(accounts[0].id);
-        // Find a suitable destination account that isn't the first one for UX convenience
         const dest = accounts.find(a => a.id !== accounts[0].id);
         if (dest) setToAccountId(dest.id);
       }
+    } else {
+        // Delay hiding until animation completes
+        const timer = setTimeout(() => setIsVisible(false), 200); 
+        return () => clearTimeout(timer);
     }
   }, [isTransactionModalOpen, accounts]);
 
-  if (!isTransactionModalOpen) return null;
+  if (!isVisible && !isTransactionModalOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,16 +268,20 @@ const TransactionModal: React.FC = () => {
       }
   }
 
+  const backdropClass = isTransactionModalOpen ? 'animate-fade-in' : 'animate-fade-out';
+  const modalClass = isTransactionModalOpen ? 'animate-zoom-in' : 'animate-zoom-out';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6`}>
+      <div className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm ${backdropClass}`} onClick={() => setTransactionModalOpen(false)} />
+      <div className={`bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] z-10 relative ${modalClass}`}>
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
             <h3 className="text-xl font-bold text-slate-800">Record Transaction</h3>
             <button 
                 onClick={() => setTransactionModalOpen(false)} 
-                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200"
             >
                 <X className="w-5 h-5" />
             </button>
@@ -285,7 +297,7 @@ const TransactionModal: React.FC = () => {
                             key={tab}
                             type="button"
                             onClick={() => setType(tab)}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
                                 type === tab ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
@@ -312,33 +324,37 @@ const TransactionModal: React.FC = () => {
                             min="0"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300 focus:shadow-sm"
                             placeholder="0.00"
                         />
                     </div>
                 </div>
 
                 {/* Custom Account Selector - Source */}
-                <AccountSelect 
-                    label={type === 'INCOME' ? 'To Account' : 'From Account'}
-                    accounts={accounts}
-                    selectedId={accountId}
-                    onChange={setAccountId}
-                />
+                <div className="animate-fade-in">
+                    <AccountSelect 
+                        label={type === 'INCOME' ? 'To Account' : 'From Account'}
+                        accounts={accounts}
+                        selectedId={accountId}
+                        onChange={setAccountId}
+                    />
+                </div>
 
                 {/* Custom Account Selector - Destination (Transfer only) */}
                 {type === 'TRANSFER' && (
-                    <AccountSelect 
-                        label="To Account"
-                        accounts={accounts}
-                        selectedId={toAccountId}
-                        onChange={setToAccountId}
-                        excludeId={accountId}
-                    />
+                    <div className="animate-fade-in">
+                        <AccountSelect 
+                            label="To Account"
+                            accounts={accounts}
+                            selectedId={toAccountId}
+                            onChange={setToAccountId}
+                            excludeId={accountId}
+                        />
+                    </div>
                 )}
 
                 {type !== 'TRANSFER' && (
-                    <div>
+                    <div className="animate-fade-in">
                         <label className="block text-sm font-medium text-slate-700 mb-1">Tags (Multiple)</label>
                         <div className="p-3 border border-slate-200 rounded-xl bg-slate-50 min-h-[100px] flex flex-col">
                             <div className="flex flex-wrap gap-2 mb-3">
@@ -347,9 +363,9 @@ const TransactionModal: React.FC = () => {
                                         key={cat}
                                         type="button"
                                         onClick={() => toggleTag(cat)}
-                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
                                             selectedTags.includes(cat)
-                                            ? 'bg-blue-600 text-white border-blue-600'
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:shadow-sm'
                                         }`}
                                     >
@@ -363,12 +379,12 @@ const TransactionModal: React.FC = () => {
                                     value={newTagInput}
                                     onChange={(e) => setNewTagInput(e.target.value)}
                                     placeholder="New tag..."
-                                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-blue-500 bg-white"
+                                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-blue-500 bg-white transition-colors"
                                 />
                                 <button 
                                     type="button" 
                                     onClick={handleAddNewTag}
-                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium text-sm transition-colors"
+                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium text-sm transition-colors active:scale-95 duration-200"
                                 >
                                     Add
                                 </button>
@@ -383,7 +399,7 @@ const TransactionModal: React.FC = () => {
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300 focus:shadow-sm"
                         placeholder="What was this for?"
                     />
                 </div>
@@ -392,13 +408,13 @@ const TransactionModal: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setTransactionModalOpen(false)}
-                        className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
+                        className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors active:scale-95 duration-200"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-200 active:scale-95"
+                        className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-200 active:scale-95 duration-200"
                     >
                         Save
                     </button>

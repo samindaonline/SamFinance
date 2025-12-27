@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { ArrowUpRight, ArrowDownRight, Activity, Wallet, PieChart as PieIcon, Plus, Calendar, TrendingUp, ScrollText, X, ChevronRight, HandCoins } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
@@ -16,6 +16,20 @@ const Dashboard: React.FC = () => {
   const [netWorthRange, setNetWorthRange] = useState<'3M' | '6M' | '1Y'>('6M');
   const [showLiabilityModal, setShowLiabilityModal] = useState(false);
   const [showReceivableModal, setShowReceivableModal] = useState(false);
+
+  // Animation States
+  const [isLiabilityModalVisible, setIsLiabilityModalVisible] = useState(false);
+  const [isReceivableModalVisible, setIsReceivableModalVisible] = useState(false);
+
+  useEffect(() => {
+      if(showLiabilityModal) setIsLiabilityModalVisible(true);
+      else setTimeout(() => setIsLiabilityModalVisible(false), 200);
+  }, [showLiabilityModal]);
+
+  useEffect(() => {
+      if(showReceivableModal) setIsReceivableModalVisible(true);
+      else setTimeout(() => setIsReceivableModalVisible(false), 200);
+  }, [showReceivableModal]);
 
   // --- Filter Logic (Fixed to 30 days, All tags) ---
   const cutoffDate = useMemo(() => {
@@ -272,16 +286,16 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
-        <div>
+        <div className="animate-slide-up">
             <h2 className="text-2xl font-bold text-slate-800">Financial Overview</h2>
             <p className="text-slate-500 text-sm">Here is what's happening with your money.</p>
         </div>
         
         {/* Actions */}
-        <div className="w-full xl:w-auto flex justify-end">
+        <div className="w-full xl:w-auto flex justify-end animate-slide-up" style={{ animationDelay: '50ms' }}>
             <button 
                 onClick={() => setTransactionModalOpen(true)}
-                className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
+                className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-200"
             >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Transaction
@@ -291,7 +305,7 @@ const Dashboard: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '100ms' }}>
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">Total Net Worth</p>
@@ -303,7 +317,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '150ms' }}>
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">Income (Mo)</p>
@@ -315,7 +329,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">Expenses (Mo)</p>
@@ -329,7 +343,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Net Worth Trend Chart */}
-      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '250ms' }}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h3 className="text-lg font-bold text-slate-800 flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2 text-slate-400" /> 
@@ -340,7 +354,7 @@ const Dashboard: React.FC = () => {
                     <button
                         key={range}
                         onClick={() => setNetWorthRange(range)}
-                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
                             netWorthRange === range 
                             ? 'bg-white text-slate-800 shadow-sm' 
                             : 'text-slate-500 hover:text-slate-700'
@@ -386,6 +400,7 @@ const Dashboard: React.FC = () => {
                     strokeWidth={2} 
                     fillOpacity={1} 
                     fill="url(#colorNetWorth)" 
+                    animationDuration={1500}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -395,7 +410,7 @@ const Dashboard: React.FC = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Activity Chart */}
-        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '300ms' }}>
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
             <Activity className="w-4 h-4 mr-2 text-slate-400" /> 
             Income vs Expenses (Last 30 Days)
@@ -419,15 +434,15 @@ const Dashboard: React.FC = () => {
                 <Tooltip 
                   contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                 />
-                <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
-                <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
+                <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" animationDuration={1500} />
+                <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" animationDuration={1500} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Expense by Tag */}
-        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '350ms' }}>
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
                 <PieIcon className="w-4 h-4 mr-2 text-slate-400" /> 
                 Expenses by Tag (Last 30 Days)
@@ -443,6 +458,7 @@ const Dashboard: React.FC = () => {
                             outerRadius={80}
                             paddingAngle={5}
                             dataKey="value"
+                            animationDuration={1500}
                         >
                             {categoryData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS_PALETTE[index % COLORS_PALETTE.length]} />
@@ -458,7 +474,7 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Receivables Forecast Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '400ms' }}>
               <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-emerald-50/30">
                   <div className="flex items-center gap-3">
                       <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
@@ -478,8 +494,8 @@ const Dashboard: React.FC = () => {
               <div className="p-5">
                   {receivableForecast.length > 0 ? (
                       <div className="space-y-3">
-                          {receivableForecast.slice(0, 3).map(rec => (
-                              <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          {receivableForecast.slice(0, 3).map((rec, idx) => (
+                              <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 animate-slide-in-right" style={{ animationDelay: `${idx * 100}ms` }}>
                                   <div className="flex items-center gap-3">
                                       <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
                                           <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(rec.expectedDate), 'MMM')}</span>
@@ -497,7 +513,7 @@ const Dashboard: React.FC = () => {
                           {receivableForecast.length > 3 && (
                               <button 
                                   onClick={() => setShowReceivableModal(true)}
-                                  className="w-full py-2 mt-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center justify-center"
+                                  className="w-full py-2 mt-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
                               >
                                   Read More ({receivableForecast.length - 3} more)
                               </button>
@@ -506,7 +522,7 @@ const Dashboard: React.FC = () => {
                           {receivableForecast.length <= 3 && receivableForecast.length > 0 && (
                               <button 
                                 onClick={() => setShowReceivableModal(true)}
-                                className="w-full text-xs text-slate-400 hover:text-emerald-600 mt-1 flex items-center justify-center gap-1"
+                                className="w-full text-xs text-slate-400 hover:text-emerald-600 mt-1 flex items-center justify-center gap-1 transition-colors"
                               >
                                 View All Details <ChevronRight className="w-3 h-3" />
                               </button>
@@ -521,7 +537,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Liabilities Forecast Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '450ms' }}>
               <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-amber-50/30">
                   <div className="flex items-center gap-3">
                       <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
@@ -541,8 +557,8 @@ const Dashboard: React.FC = () => {
               <div className="p-5">
                   {liabilityForecast.length > 0 ? (
                       <div className="space-y-3">
-                          {liabilityForecast.slice(0, 3).map(liab => (
-                              <div key={liab.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          {liabilityForecast.slice(0, 3).map((liab, idx) => (
+                              <div key={liab.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 animate-slide-in-right" style={{ animationDelay: `${idx * 100}ms` }}>
                                   <div className="flex items-center gap-3">
                                       <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
                                           <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(liab.dueDate), 'MMM')}</span>
@@ -560,7 +576,7 @@ const Dashboard: React.FC = () => {
                           {liabilityForecast.length > 3 && (
                               <button 
                                   onClick={() => setShowLiabilityModal(true)}
-                                  className="w-full py-2 mt-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center"
+                                  className="w-full py-2 mt-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
                               >
                                   Read More ({liabilityForecast.length - 3} more)
                               </button>
@@ -569,7 +585,7 @@ const Dashboard: React.FC = () => {
                           {liabilityForecast.length <= 3 && liabilityForecast.length > 0 && (
                               <button 
                                 onClick={() => setShowLiabilityModal(true)}
-                                className="w-full text-xs text-slate-400 hover:text-blue-600 mt-1 flex items-center justify-center gap-1"
+                                className="w-full text-xs text-slate-400 hover:text-blue-600 mt-1 flex items-center justify-center gap-1 transition-colors"
                               >
                                 View All Details <ChevronRight className="w-3 h-3" />
                               </button>
@@ -585,7 +601,7 @@ const Dashboard: React.FC = () => {
       </div>
 
        {/* Detailed Expense List by Date */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '500ms' }}>
           <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
              <div className="flex items-center gap-2">
                  <Calendar className="w-5 h-5 text-slate-500" />
@@ -642,7 +658,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Account Breakdown */}
-      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '550ms' }}>
            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
             <Wallet className="w-4 h-4 mr-2 text-slate-400" />
             Assets Distribution
@@ -665,7 +681,7 @@ const Dashboard: React.FC = () => {
                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                   />
                   {Array.from(new Set(assetData.flatMap((d: any) => Object.keys(d)).filter((k: any) => k !== 'name' && k !== 'total'))).map((key: string, index) => (
-                      <Bar key={key} dataKey={key} stackId="a" fill={stringToColor(key)} radius={[4, 4, 0, 0]} />
+                      <Bar key={key} dataKey={key} stackId="a" fill={stringToColor(key)} radius={[4, 4, 0, 0]} animationDuration={1500} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
@@ -678,20 +694,21 @@ const Dashboard: React.FC = () => {
         </div>
 
       {/* Liabilities Details Modal */}
-      {showLiabilityModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[85vh]">
+      {(isLiabilityModalVisible || showLiabilityModal) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${showLiabilityModal ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setShowLiabilityModal(false)} />
+              <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showLiabilityModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
                       <div>
                           <h3 className="text-xl font-bold text-slate-800">Liabilities Forecast</h3>
                           <p className="text-sm text-slate-500">Upcoming payments for the next 3 months.</p>
                       </div>
-                      <button onClick={() => setShowLiabilityModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                      <button onClick={() => setShowLiabilityModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
                           <X className="w-5 h-5" />
                       </button>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                       {liabilityForecast.map(liab => {
                            const account = accounts.find(a => a.id === liab.paymentAccountId);
                            return (
@@ -732,20 +749,21 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Receivables Details Modal */}
-      {showReceivableModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[85vh]">
+      {(isReceivableModalVisible || showReceivableModal) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${showReceivableModal ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setShowReceivableModal(false)} />
+              <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showReceivableModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
                       <div>
                           <h3 className="text-xl font-bold text-slate-800">Income Forecast</h3>
                           <p className="text-sm text-slate-500">Upcoming expected income for the next 3 months.</p>
                       </div>
-                      <button onClick={() => setShowReceivableModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                      <button onClick={() => setShowReceivableModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
                           <X className="w-5 h-5" />
                       </button>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                       {receivableForecast.map(rec => {
                            const account = accounts.find(a => a.id === rec.targetAccountId);
                            return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { Plus, Trash2, Wallet, User, Building, Edit2, CreditCard, Landmark, Check, AlertTriangle, ChevronDown, Layers, X, AlignLeft } from 'lucide-react';
 import { COLORS, DEFAULT_ACCOUNTS } from '../constants';
@@ -34,7 +34,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
   // --- Root Account Card Layout ---
   if (isRoot) {
      return (
-        <div className="group flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 mb-4 overflow-hidden">
+        <div className="group flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 mb-4 overflow-hidden animate-slide-up hover:-translate-y-0.5">
             {/* Main Header Area */}
             <div 
                 className={`flex items-center justify-between p-5 transition-colors ${children.length > 0 ? 'cursor-pointer hover:bg-slate-50' : ''}`} 
@@ -43,7 +43,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                 {/* Left: Icon & Details */}
                 <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
                      <div 
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0"
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-110 duration-300"
                         style={{ backgroundColor: account.color }}
                     >
                         {React.cloneElement(getIcon(account.type), { className: "w-6 h-6" })}
@@ -83,7 +83,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                             {!isDefaultAccount && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onEdit(account); }}
-                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all active:scale-90"
                                     title="Edit"
                                 >
                                     <Edit2 className="w-5 h-5" />
@@ -92,7 +92,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                             {!isDefaultAccount && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onDelete(account); }}
-                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90"
                                     title="Delete"
                                 >
                                     <Trash2 className="w-5 h-5" />
@@ -102,7 +102,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
 
                         {/* Accordion Chevron */}
                         {children.length > 0 && (
-                            <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-1`}>
+                            <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-1`}>
                                 <ChevronDown className="w-5 h-5" />
                             </div>
                         )}
@@ -111,28 +111,26 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
             </div>
 
             {/* Children Section (Accordion Body) */}
-            {children.length > 0 && (
-                <div className={`bg-slate-50/80 border-t border-slate-100 transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                     <div className="p-2 md:p-3 space-y-1">
-                        {children.map(child => (
-                             <AccountItem 
-                                key={child.id} 
-                                account={child} 
-                                onEdit={onEdit} 
-                                onDelete={onDelete} 
-                                level={level + 1} 
-                             />
-                        ))}
-                     </div>
-                </div>
-            )}
+            <div className={`bg-slate-50/80 border-t border-slate-100 transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                 <div className="p-2 md:p-3 space-y-1">
+                    {children.map(child => (
+                         <AccountItem 
+                            key={child.id} 
+                            account={child} 
+                            onEdit={onEdit} 
+                            onDelete={onDelete} 
+                            level={level + 1} 
+                         />
+                    ))}
+                 </div>
+            </div>
         </div>
      );
   }
 
   // --- Child Row Layout ---
   return (
-    <div className="group relative pl-4 pr-3 py-3 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm transition-all duration-200">
+    <div className="group relative pl-4 pr-3 py-3 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm transition-all duration-200 animate-fade-in">
          {/* Tree Indentation Marker */}
          <div className="absolute left-0 top-3 bottom-3 w-1 bg-slate-300/50 rounded-full ml-1" />
 
@@ -143,7 +141,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
              <div className="flex items-center gap-3 min-w-0 pr-4">
                 {/* Expand Toggle for nested sub-children */}
                 {children.length > 0 ? (
-                     <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-0.5 hover:bg-slate-200 rounded`}>
+                     <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-0.5 hover:bg-slate-200 rounded`}>
                          <ChevronDown className="w-4 h-4" />
                      </div>
                 ) : (
@@ -151,7 +149,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                 )}
 
                 <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-110"
                     style={{ backgroundColor: account.color }}
                 >
                      {React.cloneElement(getIcon(account.type), { className: "w-4 h-4" })}
@@ -178,7 +176,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                     {!isDefaultAccount && (
                         <button 
                             onClick={(e) => { e.stopPropagation(); onEdit(account); }}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg active:scale-90"
                             title="Edit"
                         >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -187,7 +185,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                     {!isDefaultAccount && (
                         <button 
                             onClick={(e) => { e.stopPropagation(); onDelete(account); }}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg active:scale-90"
                             title="Delete"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -198,8 +196,8 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
          </div>
 
          {/* Recursive Children for Child Row */}
-         {children.length > 0 && isExpanded && (
-             <div className="mt-2 ml-3 pl-3 border-l-2 border-slate-200 space-y-1">
+         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+             <div className="ml-3 pl-3 border-l-2 border-slate-200 space-y-1">
                   {children.map(child => (
                         <AccountItem 
                             key={child.id} 
@@ -210,7 +208,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                         />
                     ))}
              </div>
-         )}
+         </div>
     </div>
   );
 };
@@ -220,12 +218,27 @@ const Accounts: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // Modal Animation States
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
   // Delete Confirmation State
   const [deleteConfirmation, setDeleteConfirmation] = useState<{isOpen: boolean, account: Account | null}>({
       isOpen: false,
       account: null
   });
   
+  // Handle Modal Visibility for Animation
+  useEffect(() => {
+      if(isModalOpen) setIsModalVisible(true);
+      else setTimeout(() => setIsModalVisible(false), 200);
+  }, [isModalOpen]);
+
+  useEffect(() => {
+      if(deleteConfirmation.isOpen) setIsDeleteModalVisible(true);
+      else setTimeout(() => setIsDeleteModalVisible(false), 200);
+  }, [deleteConfirmation.isOpen]);
+
   // Form State
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -294,14 +307,14 @@ const Accounts: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-up">
         <div>
            <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Accounts</h2>
            <p className="text-slate-500 mt-1">Manage all your financial buckets in one place.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 font-semibold active:scale-95 duration-100"
+          className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 font-semibold active:scale-95 duration-200"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Account
@@ -310,11 +323,13 @@ const Accounts: React.FC = () => {
 
       <div className="flex flex-col w-full">
         {rootAccounts.length > 0 ? (
-            rootAccounts.map(account => (
-                <AccountItem key={account.id} account={account} onEdit={openEdit} onDelete={openDelete} />
+            rootAccounts.map((account, idx) => (
+                <div key={account.id} style={{ animationDelay: `${idx * 50}ms` }} className="animate-slide-up">
+                    <AccountItem account={account} onEdit={openEdit} onDelete={openDelete} />
+                </div>
             ))
         ) : (
-            <div className="w-full py-20 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+            <div className="w-full py-20 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 animate-fade-in">
                 <div className="p-4 bg-white rounded-full shadow-sm mb-4">
                     <Wallet className="w-10 h-10 text-slate-300" />
                 </div>
@@ -331,12 +346,13 @@ const Accounts: React.FC = () => {
       </div>
 
       {/* Edit/Add Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 md:p-8 animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
+      {(isModalVisible || isModalOpen) && (
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200`}>
+          <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={resetForm} />
+          <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 md:p-8 overflow-y-auto max-h-[90vh] z-10 relative ${isModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-slate-800">{editingId ? 'Edit Account' : 'New Account'}</h3>
-                <button onClick={resetForm} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                <button onClick={resetForm} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
                     <X className="w-5 h-5" />
                 </button>
             </div>
@@ -448,13 +464,13 @@ const Accounts: React.FC = () => {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                  className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-lg shadow-blue-200 active:scale-95"
+                  className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-lg shadow-blue-200 active:scale-95 duration-200"
                 >
                   {editingId ? 'Save Changes' : 'Create Account'}
                 </button>
@@ -465,11 +481,12 @@ const Accounts: React.FC = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmation.isOpen && deleteConfirmation.account && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
+      {(isDeleteModalVisible || deleteConfirmation.isOpen) && deleteConfirmation.account && (
+         <div className={`fixed inset-0 z-50 flex items-center justify-center p-4`}>
+            <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${deleteConfirmation.isOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setDeleteConfirmation({ isOpen: false, account: null })} />
+            <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative ${deleteConfirmation.isOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                 <div className="flex flex-col items-center text-center mb-6">
-                    <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600">
+                    <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600 animate-pulse">
                         <AlertTriangle className="w-8 h-8" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Delete Account?</h3>
@@ -485,13 +502,13 @@ const Accounts: React.FC = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={() => setDeleteConfirmation({ isOpen: false, account: null })}
-                        className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                        className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={confirmDelete}
-                        className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200"
+                        className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200 active:scale-95 duration-200"
                     >
                         Delete
                     </button>
