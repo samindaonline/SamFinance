@@ -16,7 +16,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   
-  // Guard to prevent auto-save from overwriting reset/import actions during reload
+  // Guard to prevent auto-save from overwriting reset/import actions during state transitions
   const isResetting = useRef(false);
 
   // Load initial data
@@ -54,7 +54,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoaded(true);
   }, []);
 
-  // Save changes - Only runs if NOT resetting
+  // Save changes - Only runs if NOT resetting/importing
   useEffect(() => {
     if (isLoaded && !isResetting.current) {
       storage.accounts.save(accounts);
@@ -169,42 +169,197 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCurrencyState(c);
   };
 
-  const importData = useCallback((jsonString: string): boolean => {
+  const importData = useCallback((jsonString: string): { success: boolean, message: string } => {
     try {
-        const data = JSON.parse(jsonString);
+        let data: any;
+        try {
+            data = JSON.parse(jsonString);
+        } catch (e) {
+            return { success: false, message: "Invalid JSON format." };
+        }
         
-        // Basic validation
-        if (!data || typeof data !== 'object' || !Array.isArray(data.accounts)) {
-            console.error("Invalid data format: Missing accounts array.");
-            return false;
+        if (!data || typeof data !== 'object') {
+            return { success: false, message: "Data must be a JSON object." };
         }
 
         // 1. Lock the auto-save mechanism
         isResetting.current = true;
 
-        // 2. Direct write to storage with fallback defaults
-        storage.accounts.save(data.accounts);
-        storage.transactions.save(Array.isArray(data.transactions) ? data.transactions : []);
-        storage.categories.save(Array.isArray(data.categories) ? data.categories : DEFAULT_CATEGORIES);
-        storage.liabilities.save(Array.isArray(data.liabilities) ? data.liabilities : []);
-        storage.receivables.save(Array.isArray(data.receivables) ? data.receivables : []);
-        storage.budgets.save(Array.isArray(data.budgetProjects) ? data.budgetProjects : []);
-        
-        if (data.currency) {
-            storage.currency.save(data.currency);
-        }
+        const stats = {
+            accounts: 0,
+            transactions: 0,
+            categories: 0,
+            liabilities: 0,
+            receivables: 0,
+            projects: 0
+        };
 
-        // 3. Reload
-        // Using a short timeout to ensure the storage write operation completes in the event loop (though localStorage is sync)
-        setTimeout(() => {
-            window.location.reload();
-        }, 50);
+        // 2. Generic Merge Helper (UPSERT Strategy)
+        // If item exists (by ID), it is UPDATED. If not, it is INSERTED.
+        const mergeEntity = <T extends { id: string }>(
+            current: T[], 
+            incoming: any[], 
+            entityName: keyof typeof stats, 
+            validator: (item: any) => boolean, 
+            migrator?: (item: any) => T
+        ) => {
+            if (!Array.isArray(incoming)) return current;
+            
+            // Map for O(1) access and updates
+            const mergedMap = new Map<string, T>();
+            
+            // Populate with current items
+            current.forEach(item => mergedMap.set(item.id, item));
+
+            incoming.forEach(item => {
+                if (!item || typeof item !== 'object') return;
+                
+                // Migrate if needed (e.g. legacy transactions)
+                let processedItem = migrator ? migrator(item) : item as T;
+                
+                // If ID is missing, generate one (helps with manually created JSON)
+                if (!processedItem.id) {
+                    processedItem = { ...processedItem, id: crypto.randomUUID() };
+                }
+                
+                // Validate required fields
+                if (!validator(processedItem)) return;
+
+                // Check if it's new for stats counting
+                if (!mergedMap.has(processedItem.id)) {
+                    stats[entityName]++;
+                }
+                
+                // Set item (Upsert)
+                mergedMap.set(processedItem.id, processedItem);
+            });
+            
+            return Array.from(mergedMap.values());
+        };
+
+        // 3. Process Entities
         
-        return true;
+        // Accounts
+        const newAccounts = mergeEntity(
+            accounts, 
+            data.accounts, 
+            'accounts', 
+            (i) => !!i.name, // Validator
+            undefined 
+        );
+
+        // Transactions (Handle legacy tags/category)
+        const newTransactions = mergeEntity(
+            transactions,
+            data.transactions,
+            'transactions',
+            (i) => !!i.amount && !!i.date,
+            (t: any) => ({
+                ...t,
+                tags: Array.isArray(t.tags) ? t.tags : (t.category ? [t.category] : [])
+            })
+        );
+
+        // Categories (Simple string array merge)
+        const currentCatSet = new Set<string>(categories);
+        const incomingCats = Array.isArray(data.categories) ? data.categories : [];
+        incomingCats.forEach((c: any) => {
+            if (typeof c === 'string' && !currentCatSet.has(c)) {
+                currentCatSet.add(c);
+                stats.categories++;
+            }
+        });
+        const newCategories = Array.from(currentCatSet).sort();
+
+        // Liabilities
+        const newLiabilities = mergeEntity(
+            liabilities,
+            data.liabilities,
+            'liabilities',
+            (i) => !!i.amount,
+            (l: any) => ({
+                ...l,
+                name: l.name || l.title || 'Untitled',
+                description: l.description || ''
+            })
+        );
+
+        // Receivables
+        const newReceivables = mergeEntity(
+            receivables,
+            data.receivables,
+            'receivables',
+            (i) => !!i.amount,
+            undefined
+        );
+
+        // Budgets
+        const newBudgets = mergeEntity(
+            budgetProjects,
+            data.budgetProjects,
+            'projects',
+            (i) => !!i.name,
+            undefined
+        );
+        
+        // Note: Currency setting is NOT overwritten to preserve user preference
+
+        // 4. Update Storage IMMEDIATELY
+        storage.accounts.save(newAccounts);
+        storage.transactions.save(newTransactions);
+        storage.categories.save(newCategories);
+        storage.liabilities.save(newLiabilities);
+        storage.receivables.save(newReceivables);
+        storage.budgets.save(newBudgets);
+
+        // 5. Update State (Soft Refresh)
+        setAccounts(newAccounts);
+        setTransactions(newTransactions);
+        setCategories(newCategories);
+        setLiabilities(newLiabilities);
+        setReceivables(newReceivables);
+        setBudgetProjects(newBudgets);
+
+        // 6. Release lock after state settles
+        setTimeout(() => {
+            isResetting.current = false;
+        }, 800);
+        
+        const successMessage = `Import completed.\n\nMerged:\n• ${stats.accounts} New Accounts\n• ${stats.transactions} New Transactions\n• ${stats.categories} New Categories\n• ${stats.liabilities} New Liabilities\n• ${stats.receivables} New Receivables\n• ${stats.projects} New Forecasts`;
+        
+        return { success: true, message: successMessage };
     } catch (error) {
         console.error("Failed to parse import data", error);
-        return false;
+        return { success: false, message: "An unexpected error occurred during import." };
     }
+  }, [accounts, transactions, categories, liabilities, receivables, budgetProjects]);
+
+  const resetData = useCallback(() => {
+    // 1. Lock the auto-save mechanism
+    isResetting.current = true;
+    
+    // 2. Overwrite storage with Defaults
+    storage.accounts.save(DEFAULT_ACCOUNTS);
+    storage.transactions.save([]);
+    storage.categories.save(DEFAULT_CATEGORIES);
+    storage.liabilities.save([]);
+    storage.receivables.save([]);
+    storage.budgets.save([]);
+    storage.currency.save('LKR');
+
+    // 3. Update State (Soft Reset) - No Page Reload needed
+    setAccounts(DEFAULT_ACCOUNTS);
+    setTransactions([]);
+    setCategories(DEFAULT_CATEGORIES);
+    setLiabilities([]);
+    setReceivables([]);
+    setBudgetProjects([]);
+    setCurrencyState('LKR');
+
+    // 4. Release lock after state settles
+    setTimeout(() => {
+        isResetting.current = false;
+    }, 500);
   }, []);
 
   const formatCurrency = useCallback((amount: number) => {
@@ -285,7 +440,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     currency,
     setCurrency,
     formatCurrency,
-    importData
+    importData,
+    resetData
   };
 
   if (!isLoaded) return null;

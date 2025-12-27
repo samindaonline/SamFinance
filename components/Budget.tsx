@@ -4,6 +4,7 @@ import { useFinance } from '../context/FinanceContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, Save, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, isBefore, isSameMonth, startOfDay, isAfter, getDate, setDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DatePicker from './DatePicker';
 
 // --- Sub-components for better organization ---
@@ -386,6 +387,24 @@ const Budget: React.FC = () => {
       return { projectionData: finalProjectionData, timelineEvents: events };
   }, [items, accounts, liabilities, receivables, getAccountBalance, activeProject, filterStartDate, filterEndDate]);
 
+  const chartData = useMemo(() => {
+    if (!projectionData) return [];
+    const keys = Object.keys(projectionData);
+    if (keys.length === 0) return [];
+    
+    // Assume all accounts cover the same timeline (based on simulation range)
+    // Map over the first account's months
+    return projectionData[keys[0]].map((entry) => {
+        const point: any = { name: entry.month };
+        keys.forEach(accId => {
+            const accEntry = projectionData[accId].find(e => e.month === entry.month);
+            if (accEntry) {
+                point[accId] = accEntry.minBalance;
+            }
+        });
+        return point;
+    });
+  }, [projectionData]);
 
   // --- Render Views ---
 
@@ -628,6 +647,70 @@ const Budget: React.FC = () => {
                           Add Item
                       </button>
                   </div>
+
+                  {chartData.length > 0 && (
+                        <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 className="font-bold text-slate-800 mb-6 flex items-center">
+                                <TrendingDown className="w-5 h-5 mr-2 text-slate-500" />
+                                Projected Minimum Balances
+                            </h3>
+                            <div className="h-72 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            {Object.keys(projectionData || {}).map(accId => {
+                                                const acc = accounts.find(a => a.id === accId);
+                                                const color = acc?.color || '#cbd5e1';
+                                                return (
+                                                    <linearGradient key={accId} id={`color-${accId}`} x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                                                    </linearGradient>
+                                                );
+                                            })}
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis 
+                                            dataKey="name" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fontSize: 11, fill: '#64748b'}} 
+                                            interval="preserveStartEnd" 
+                                        />
+                                        <YAxis 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fontSize: 11, fill: '#64748b'}} 
+                                            tickFormatter={(value) => {
+                                                if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+                                                return value;
+                                            }}
+                                        />
+                                        <Tooltip 
+                                            formatter={(value: number) => formatCurrency(value)}
+                                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                        />
+                                        <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
+                                        {Object.keys(projectionData || {}).map(accId => {
+                                            const acc = accounts.find(a => a.id === accId);
+                                            const color = acc?.color || '#94a3b8';
+                                            return (
+                                                <Area 
+                                                    key={accId}
+                                                    type="monotone" 
+                                                    dataKey={accId} 
+                                                    name={acc?.name || 'Unknown Account'} 
+                                                    stroke={color} 
+                                                    fill={`url(#color-${accId})`}
+                                                    strokeWidth={2}
+                                                />
+                                            );
+                                        })}
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
 
                   {/* Projected Cash Flow Timeline */}
                   {timelineEvents.length > 0 && (
