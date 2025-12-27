@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, Save, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import { format, parseISO, startOfMonth, endOfMonth, addMonths, isBefore, isSameMonth, startOfDay, isAfter, getDate, setDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
+import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DatePicker from './DatePicker';
 
@@ -27,7 +27,7 @@ const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDel
                 </button>
             </div>
             <h3 className="font-bold text-slate-800 text-lg mb-1">{project.name}</h3>
-            <p className="text-xs text-slate-400 mb-4">Created {format(parseISO(project.createdAt), 'MMM dd, yyyy')}</p>
+            <p className="text-xs text-slate-400 mb-4">Created {format(new Date(project.createdAt), 'MMM dd, yyyy')}</p>
             
             <div className="flex justify-between items-end border-t border-slate-100 pt-3">
                 <div>
@@ -40,6 +40,13 @@ const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDel
             </div>
         </div>
     );
+};
+
+const parseDate = (str: string) => {
+    // If ISO date string 'YYYY-MM-DD', treat as local midnight
+    if (str.length === 10) return new Date(str + 'T00:00:00');
+    // Else let Date handle it (e.g. full ISO timestamp)
+    return new Date(str);
 };
 
 // --- Main Component ---
@@ -68,7 +75,7 @@ const Budget: React.FC = () => {
   const [items, setItems] = useState<BudgetItem[]>([]);
   
   // Date Filter State
-  const [filterStartDate, setFilterStartDate] = useState(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+  const [filterStartDate, setFilterStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [filterEndDate, setFilterEndDate] = useState(format(endOfMonth(addMonths(new Date(), 6)), 'yyyy-MM-dd'));
 
   // Temporary State for Adding a new Item
@@ -102,7 +109,7 @@ const Budget: React.FC = () => {
       setActiveProject(project);
       setItems(JSON.parse(JSON.stringify(project.items))); // Deep copy to avoid direct mutation
       // Reset date filters to defaults when opening
-      setFilterStartDate(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+      setFilterStartDate(format(new Date(), 'yyyy-MM-dd'));
       setFilterEndDate(format(endOfMonth(addMonths(new Date(), 6)), 'yyyy-MM-dd'));
       setView('detail');
   };
@@ -153,7 +160,7 @@ const Budget: React.FC = () => {
   // --- Helper: recurring date logic ---
   const getRecurringDateInMonth = (baseDate: Date, targetMonth: Date) => {
     const dayOfBase = getDate(baseDate); // e.g., 30
-    const targetMonthStart = startOfMonth(targetMonth);
+    const targetMonthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
     const lastDayOfTarget = getDate(endOfMonth(targetMonthStart)); // e.g., 28 (Feb)
     
     // If base is 30th, but Feb only has 28, use 28.
@@ -169,10 +176,11 @@ const Budget: React.FC = () => {
       if (!activeProject) return { projectionData: null, timelineEvents: [] };
 
       // Simulation starts strictly from the filtered start date.
-      // We assume the "Current Balance" in the app represents the balance at the start of this date 
-      // (or rather, we ignore any back-dated events and assume they are settled).
-      const simulationStart = startOfDay(parseISO(filterStartDate)); 
-      const simulationEnd = endOfDay(parseISO(filterEndDate));
+      const simulationStart = new Date(filterStartDate + 'T00:00:00');
+      simulationStart.setHours(0,0,0,0);
+      
+      const simulationEnd = new Date(filterEndDate + 'T00:00:00');
+      simulationEnd.setHours(23,59,59,999);
 
       // 1. Build Unified Event List (From FilterStartDate -> EndDate)
       const events: Array<{
@@ -189,7 +197,7 @@ const Budget: React.FC = () => {
       // A. Add Project Installments
       items.forEach(item => {
           item.installments.forEach(inst => {
-             const d = parseISO(inst.date);
+             const d = parseDate(inst.date);
              // STRICT CHECK: Must be >= simulationStart
              if ((isAfter(d, simulationStart) || isSameDay(d, simulationStart)) && isBefore(d, simulationEnd)) {
                  events.push({
@@ -207,7 +215,7 @@ const Budget: React.FC = () => {
       // B. Add Liabilities
       liabilities.forEach(l => {
           if(l.status === 'PENDING') {
-              const d = parseISO(l.dueDate);
+              const d = parseDate(l.dueDate);
                // STRICT CHECK: Must be >= simulationStart
                if ((isAfter(d, simulationStart) || isSameDay(d, simulationStart)) && isBefore(d, simulationEnd)) {
                    events.push({
@@ -226,7 +234,7 @@ const Budget: React.FC = () => {
       receivables.forEach(r => {
           if (r.status === 'PENDING') {
               if (r.type === 'ONE_TIME') {
-                  const d = parseISO(r.expectedDate);
+                  const d = parseDate(r.expectedDate);
                   // STRICT CHECK: Must be >= simulationStart
                   if ((isAfter(d, simulationStart) || isSameDay(d, simulationStart)) && isBefore(d, simulationEnd)) {
                       events.push({
@@ -240,8 +248,8 @@ const Budget: React.FC = () => {
                   }
               } else if (r.type === 'RECURRING') {
                   // Generate occurrences
-                  let iterDate = startOfMonth(simulationStart);
-                  const baseDate = parseISO(r.expectedDate);
+                  let iterDate = new Date(simulationStart.getFullYear(), simulationStart.getMonth(), 1);
+                  const baseDate = parseDate(r.expectedDate);
                   
                   while (isBefore(iterDate, simulationEnd)) {
                        const recurrenceDate = getRecurringDateInMonth(baseDate, iterDate);
@@ -284,7 +292,7 @@ const Budget: React.FC = () => {
       const monthlyProjections: Record<string, Record<string, { start: number, end: number, min: number }>> = {};
 
       // Initialize Monthly Projection Structure for involved accounts
-      let monIter = startOfMonth(simulationStart);
+      let monIter = new Date(simulationStart.getFullYear(), simulationStart.getMonth(), 1);
       while (isBefore(monIter, simulationEnd)) {
           const mKey = format(monIter, 'MMM yyyy');
           accounts.forEach(acc => {
@@ -340,7 +348,7 @@ const Budget: React.FC = () => {
 
       // Post-process Monthly Projections
       const monthKeys: string[] = [];
-      let m = startOfMonth(simulationStart);
+      let m = new Date(simulationStart.getFullYear(), simulationStart.getMonth(), 1);
       while (isBefore(m, simulationEnd)) {
           monthKeys.push(format(m, 'MMM yyyy'));
           m = addMonths(m, 1);
@@ -571,7 +579,7 @@ const Budget: React.FC = () => {
                                                                     <div key={inst.id} className="flex justify-between items-center text-sm border-b border-slate-100 pb-1 last:border-0">
                                                                         <div className="flex items-center gap-2">
                                                                             <Calendar className="w-3 h-3 text-slate-400" />
-                                                                            <span className="text-slate-600">{format(parseISO(inst.date), 'MMM dd, yyyy')}</span>
+                                                                            <span className="text-slate-600">{format(parseDate(inst.date), 'MMM dd, yyyy')}</span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 truncate max-w-[100px]">{acc?.name}</span>

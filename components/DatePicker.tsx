@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parseISO, isValid } from 'date-fns';
+import { format, addMonths, endOfMonth, addDays, isSameDay, isValid } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 interface DatePickerProps {
@@ -12,9 +12,15 @@ interface DatePickerProps {
 
 const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, className = '', required }) => {
   const [isOpen, setIsOpen] = useState(false);
-  // Parse value to date, default to today if invalid/empty
-  const selectedDate = value ? parseISO(value) : undefined;
-  const [currentMonth, setCurrentMonth] = useState(isValid(selectedDate) ? selectedDate! : new Date());
+  
+  // Parse value (YYYY-MM-DD) to date using local midnight
+  const parseDate = (str: string) => {
+    if (str.length === 10) return new Date(str + 'T00:00:00');
+    return new Date(str);
+  }
+  
+  const selectedDate = value ? parseDate(value) : undefined;
+  const [currentMonth, setCurrentMonth] = useState(selectedDate && isValid(selectedDate) ? selectedDate! : new Date());
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,7 +42,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, classNa
   }, [wrapperRef]);
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const prevMonth = () => setCurrentMonth(addMonths(currentMonth, -1)); // Replaced subMonths
   
   const handleDayClick = (day: Date) => {
     onChange(format(day, 'yyyy-MM-dd'));
@@ -62,8 +68,13 @@ const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, classNa
   const renderDays = () => {
     const dateFormat = "EEE";
     const days = [];
-    let startDate = startOfWeek(currentMonth);
     
+    // Start of Week (Sunday) manual implementation
+    const startDate = new Date(currentMonth);
+    const day = startDate.getDay(); // 0 is Sunday
+    const diff = startDate.getDate() - day; // subtract day number from today
+    startDate.setDate(diff); // Now startDate is the Sunday of current week (or previous)
+
     for (let i = 0; i < 7; i++) {
       days.push(
         <div className="text-[10px] font-bold text-slate-400 text-center py-1 uppercase tracking-wide" key={i}>
@@ -75,10 +86,17 @@ const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, classNa
   };
 
   const renderCells = () => {
-    const monthStart = startOfMonth(currentMonth);
+    // Start of Month
+    const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
+    
+    // Start of Week for grid start
+    const startDate = new Date(monthStart);
+    startDate.setDate(monthStart.getDate() - monthStart.getDay());
+    
+    // End of Week for grid end
+    const endDate = new Date(monthEnd);
+    endDate.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()));
 
     const dateFormat = "d";
     const rows = [];
@@ -89,9 +107,11 @@ const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, classNa
     while (day <= endDate) {
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, dateFormat);
-        const cloneDay = day;
+        const cloneDay = new Date(day);
+        
+        // Manual isSameDay to ensure local time comparison if needed, though date-fns isSameDay is robust
         const isSelected = selectedDate && isSameDay(day, selectedDate);
-        const isCurrentMonth = isSameMonth(day, monthStart);
+        const isCurrentMonth = day.getMonth() === monthStart.getMonth();
         const isTodayDate = isSameDay(day, new Date());
         
         days.push(
@@ -129,7 +149,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ label, value, onChange, classNa
       >
         <CalendarIcon className="w-4 h-4 text-slate-400 mr-2 group-hover:text-blue-500 transition-colors" />
         <span className={`text-sm font-medium ${value ? 'text-slate-700' : 'text-slate-400'}`}>
-           {value ? format(parseISO(value), 'MMM dd, yyyy') : 'Select Date'}
+           {value ? format(parseDate(value), 'MMM dd, yyyy') : 'Select Date'}
         </span>
       </div>
       

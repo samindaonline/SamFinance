@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { CURRENCIES } from '../constants';
-import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal } from 'lucide-react';
+import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Settings: React.FC = () => {
@@ -119,28 +120,25 @@ const Settings: React.FC = () => {
         </div>
         
         <div className="p-6">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 {CURRENCIES.map((curr) => (
-                     <button
-                        key={curr.code}
-                        onClick={() => setCurrency(curr.code)}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                            currency === curr.code 
-                                ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' 
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
-                        }`}
-                     >
-                         <div className="flex items-center gap-3">
-                             <span className="text-xl font-bold w-8 text-center">{curr.symbol}</span>
-                             <div className="text-left">
-                                 <div className="font-bold text-sm">{curr.code}</div>
-                                 <div className="text-xs opacity-75">{curr.name}</div>
-                             </div>
-                         </div>
-                         {currency === curr.code && <Check className="w-5 h-5 text-blue-600" />}
-                     </button>
-                 ))}
-             </div>
+            <div className="relative max-w-md">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center w-8">
+                    <span className="text-lg font-bold text-slate-500">
+                        {CURRENCIES.find(c => c.code === currency)?.symbol}
+                    </span>
+                </div>
+                <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full pl-14 pr-10 py-3 appearance-none border border-slate-200 rounded-xl bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-300 transition-all cursor-pointer shadow-sm"
+                >
+                    {CURRENCIES.map(curr => (
+                        <option key={curr.code} value={curr.code}>
+                            {curr.code} - {curr.name}
+                        </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
         </div>
       </div>
 
@@ -231,8 +229,8 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Import Modal */}
-      {showImportModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      {showImportModal && createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
                   <div className="flex justify-between items-center p-5 border-b border-slate-100">
                       <div className="flex items-center gap-3">
@@ -319,7 +317,8 @@ const Settings: React.FC = () => {
                         </button>
                   </div>
               </div>
-          </div>
+          </div>,
+          document.body
       )}
     </div>
   );

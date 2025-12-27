@@ -2,7 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { ArrowUpRight, ArrowDownRight, Activity, Wallet, PieChart as PieIcon, Plus, Calendar, TrendingUp, ScrollText, X, ChevronRight, HandCoins } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
-import { format, subDays, isAfter, parseISO, subMonths, isSameDay, startOfDay, startOfMonth, endOfMonth, addMonths } from 'date-fns';
+import { format, isAfter, endOfMonth, addMonths, isSameDay } from 'date-fns';
+
+// Helper to replace parseISO for YYYY-MM-DD strings to ensure local midnight
+const parseDate = (dateStr: string) => {
+    if (dateStr.length === 10) return new Date(dateStr + 'T00:00:00');
+    return new Date(dateStr);
+};
 
 const Dashboard: React.FC = () => {
   const { transactions, liabilities, receivables, totalNetWorth, getAccountBalance, accounts, setTransactionModalOpen, formatCurrency } = useFinance();
@@ -13,12 +19,15 @@ const Dashboard: React.FC = () => {
 
   // --- Filter Logic (Fixed to 30 days, All tags) ---
   const cutoffDate = useMemo(() => {
-    return subDays(new Date(), 30);
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
   }, []);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const isDateValid = isAfter(parseISO(t.date), cutoffDate);
+      // Transaction dates are full ISO strings
+      const isDateValid = isAfter(new Date(t.date), cutoffDate);
       return isDateValid;
     });
   }, [transactions, cutoffDate]);
@@ -42,16 +51,16 @@ const Dashboard: React.FC = () => {
   // --- Liability Forecast Logic ---
   const liabilityForecast = useMemo(() => {
     const today = new Date();
-    const start = startOfMonth(today);
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = endOfMonth(addMonths(today, 3)); // Current month + 3 months forward
 
     return liabilities
         .filter(l => {
             if (l.status !== 'PENDING') return false;
-            const d = parseISO(l.dueDate);
+            const d = parseDate(l.dueDate);
             return d >= start && d <= end;
         })
-        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        .sort((a, b) => parseDate(a.dueDate).getTime() - parseDate(b.dueDate).getTime());
   }, [liabilities]);
 
   const totalForecastLiability = liabilityForecast.reduce((sum, l) => sum + l.amount, 0);
@@ -59,16 +68,16 @@ const Dashboard: React.FC = () => {
   // --- Receivable Forecast Logic ---
   const receivableForecast = useMemo(() => {
     const today = new Date();
-    const start = startOfMonth(today);
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = endOfMonth(addMonths(today, 3)); // Current month + 3 months forward
 
     return receivables
         .filter(r => {
             if (r.status !== 'PENDING') return false;
-            const d = parseISO(r.expectedDate);
+            const d = parseDate(r.expectedDate);
             return d >= start && d <= end;
         })
-        .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
+        .sort((a, b) => parseDate(a.expectedDate).getTime() - parseDate(b.expectedDate).getTime());
   }, [receivables]);
 
   const totalForecastReceivable = receivableForecast.reduce((sum, r) => sum + r.amount, 0);
@@ -147,10 +156,12 @@ const Dashboard: React.FC = () => {
       const sortedTrans = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       // 3. Determine Start Date
-      const today = startOfDay(new Date());
-      let startDate = subMonths(today, 6);
-      if (netWorthRange === '3M') startDate = subMonths(today, 3);
-      if (netWorthRange === '1Y') startDate = subMonths(today, 12);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      let startDate = addMonths(today, -6);
+      if (netWorthRange === '3M') startDate = addMonths(today, -3);
+      if (netWorthRange === '1Y') startDate = addMonths(today, -12);
 
       // 4. Generate daily points backwards from Today
       const dataPoints = [];
@@ -158,19 +169,20 @@ const Dashboard: React.FC = () => {
       let transIndex = 0;
 
       // Loop backwards from today to start date
-      for (let d = today; d >= startDate; d = subDays(d, 1)) {
+      for (let d = new Date(today); d >= startDate; d.setDate(d.getDate() - 1)) {
           // Push current value for this day
           dataPoints.push({
               date: format(d, 'MMM dd'),
               value: currentVal,
-              rawDate: d
+              rawDate: new Date(d)
           });
 
           // Adjust currentVal to represent the state *before* this day's transactions
           // We are reversing the effects of transactions that happened on 'd'
           while(transIndex < sortedTrans.length) {
               const t = sortedTrans[transIndex];
-              const tDate = startOfDay(parseISO(t.date));
+              const tDate = new Date(t.date);
+              tDate.setHours(0,0,0,0);
 
               if (tDate > d) {
                   // Transaction is in the future relative to 'd', skip (should have been handled already)
@@ -220,7 +232,7 @@ const Dashboard: React.FC = () => {
         .filter(t => t.type === 'EXPENSE')
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .forEach(t => {
-            const dateKey = format(parseISO(t.date), 'yyyy-MM-dd');
+            const dateKey = format(new Date(t.date), 'yyyy-MM-dd');
             if (!groups[dateKey]) groups[dateKey] = { total: 0, items: [] };
             groups[dateKey].total += t.amount;
             groups[dateKey].items.push(t);
@@ -470,8 +482,8 @@ const Dashboard: React.FC = () => {
                               <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                                   <div className="flex items-center gap-3">
                                       <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(rec.expectedDate), 'MMM')}</span>
-                                          <span className="text-sm font-bold text-slate-700">{format(parseISO(rec.expectedDate), 'dd')}</span>
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(rec.expectedDate), 'MMM')}</span>
+                                          <span className="text-sm font-bold text-slate-700">{format(parseDate(rec.expectedDate), 'dd')}</span>
                                       </div>
                                       <div>
                                           <div className="font-semibold text-sm text-slate-800">{rec.name}</div>
@@ -533,8 +545,8 @@ const Dashboard: React.FC = () => {
                               <div key={liab.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                                   <div className="flex items-center gap-3">
                                       <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(liab.dueDate), 'MMM')}</span>
-                                          <span className="text-sm font-bold text-slate-700">{format(parseISO(liab.dueDate), 'dd')}</span>
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(liab.dueDate), 'MMM')}</span>
+                                          <span className="text-sm font-bold text-slate-700">{format(parseDate(liab.dueDate), 'dd')}</span>
                                       </div>
                                       <div>
                                           <div className="font-semibold text-sm text-slate-800">{liab.name}</div>
@@ -587,7 +599,7 @@ const Dashboard: React.FC = () => {
                      <div key={date} className="group">
                          {/* Date Header */}
                          <div className="bg-slate-50 px-4 md:px-6 py-2 md:py-3 flex justify-between items-center">
-                             <span className="font-semibold text-slate-700 text-sm">{format(parseISO(date), 'MMM do')}</span>
+                             <span className="font-semibold text-slate-700 text-sm">{format(new Date(date), 'MMM do')}</span>
                              <span className="font-bold text-rose-600 text-sm">-{formatCurrency(group.total)}</span>
                          </div>
                          {/* Transactions for that date */}
@@ -687,8 +699,8 @@ const Dashboard: React.FC = () => {
                                   <div className="flex justify-between items-start mb-2">
                                       <div className="flex items-center gap-3">
                                           <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(liab.dueDate), 'MMM')}</span>
-                                              <span className="text-lg font-bold text-slate-700">{format(parseISO(liab.dueDate), 'dd')}</span>
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(liab.dueDate), 'MMM')}</span>
+                                              <span className="text-lg font-bold text-slate-700">{format(parseDate(liab.dueDate), 'dd')}</span>
                                           </div>
                                           <div>
                                               <div className="font-bold text-slate-800">{liab.name}</div>
@@ -741,8 +753,8 @@ const Dashboard: React.FC = () => {
                                   <div className="flex justify-between items-start mb-2">
                                       <div className="flex items-center gap-3">
                                           <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(rec.expectedDate), 'MMM')}</span>
-                                              <span className="text-lg font-bold text-slate-700">{format(parseISO(rec.expectedDate), 'dd')}</span>
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(rec.expectedDate), 'MMM')}</span>
+                                              <span className="text-lg font-bold text-slate-700">{format(parseDate(rec.expectedDate), 'dd')}</span>
                                           </div>
                                           <div>
                                               <div className="font-bold text-slate-800">{rec.name}</div>

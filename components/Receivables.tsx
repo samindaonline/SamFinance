@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2 } from 'lucide-react';
-import { format, isPast, isToday, parseISO } from 'date-fns';
+import { format, isPast, isToday } from 'date-fns';
 import { Receivable } from '../types';
 import DatePicker from './DatePicker';
 
@@ -69,18 +69,24 @@ const Receivables: React.FC = () => {
     setIsAdding(false);
   };
 
+  const parseDate = (str: string) => {
+      // Parses YYYY-MM-DD to local date
+      if (str.length === 10) return new Date(str + 'T00:00:00');
+      return new Date(str);
+  };
+
   const pendingReceivables = receivables.filter(r => r.status === 'PENDING').sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
   const receivedReceivables = receivables.filter(r => r.status === 'RECEIVED').sort((a, b) => new Date(b.expectedDate).getTime() - new Date(a.expectedDate).getTime());
 
   const getDateColor = (dateStr: string) => {
-      const date = parseISO(dateStr);
+      const date = parseDate(dateStr);
       if (isPast(date) && !isToday(date)) return 'text-amber-600 bg-amber-50 border-amber-100'; // Overdue but for income it's usually just "late"
       if (isToday(date)) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
       return 'text-slate-600 bg-slate-50 border-slate-100';
   };
 
   const getDateLabel = (dateStr: string) => {
-      const date = parseISO(dateStr);
+      const date = parseDate(dateStr);
       if (isPast(date) && !isToday(date)) return 'Overdue';
       if (isToday(date)) return 'Expected Today';
       return format(date, 'MMM dd');
@@ -206,15 +212,15 @@ const Receivables: React.FC = () => {
               {pendingReceivables.length > 0 ? (
                   pendingReceivables.map(receivable => {
                       const account = accounts.find(a => a.id === receivable.targetAccountId);
-                      const isOverdue = isPast(parseISO(receivable.expectedDate)) && !isToday(parseISO(receivable.expectedDate));
+                      const isOverdue = isPast(parseDate(receivable.expectedDate)) && !isToday(parseDate(receivable.expectedDate));
                       
                       return (
                         <div key={receivable.id} className={`bg-white p-4 rounded-xl border transition-all hover:shadow-md ${isOverdue ? 'border-amber-200 shadow-amber-100' : 'border-slate-200 shadow-sm'}`}>
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div className="flex items-start gap-4">
                                     <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${getDateColor(receivable.expectedDate)} flex-shrink-0`}>
-                                        <span className="text-xs font-bold uppercase">{parseISO(receivable.expectedDate).toLocaleString('default', { month: 'short' })}</span>
-                                        <span className="text-xl font-bold">{parseISO(receivable.expectedDate).getDate()}</span>
+                                        <span className="text-xs font-bold uppercase">{parseDate(receivable.expectedDate).toLocaleString('default', { month: 'short' })}</span>
+                                        <span className="text-xl font-bold">{parseDate(receivable.expectedDate).getDate()}</span>
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -304,7 +310,7 @@ const Receivables: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-slate-700 decoration-slate-400 line-through decoration-2">{receivable.name}</h4>
                                     <div className="text-xs text-slate-400">
-                                        Expected: {format(parseISO(receivable.expectedDate), 'MMM dd, yyyy')} • {account?.name}
+                                        Expected: {format(parseDate(receivable.expectedDate), 'MMM dd, yyyy')} • {account?.name}
                                     </div>
                                 </div>
                             </div>

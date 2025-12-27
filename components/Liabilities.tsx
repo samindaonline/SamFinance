@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
-import { format, isPast, isToday, parseISO } from 'date-fns';
+import { format, isPast, isToday } from 'date-fns';
 import DatePicker from './DatePicker';
 
 const Liabilities: React.FC = () => {
@@ -38,18 +38,24 @@ const Liabilities: React.FC = () => {
     setIsAdding(false);
   };
 
+  const parseDate = (str: string) => {
+      // Parses YYYY-MM-DD to local date
+      if (str.length === 10) return new Date(str + 'T00:00:00');
+      return new Date(str);
+  };
+
   const pendingLiabilities = liabilities.filter(l => l.status === 'PENDING').sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   const paidLiabilities = liabilities.filter(l => l.status === 'PAID').sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
 
   const getDueDateColor = (dateStr: string) => {
-      const date = parseISO(dateStr);
+      const date = parseDate(dateStr);
       if (isPast(date) && !isToday(date)) return 'text-rose-600 bg-rose-50 border-rose-100';
       if (isToday(date)) return 'text-amber-600 bg-amber-50 border-amber-100';
       return 'text-slate-600 bg-slate-50 border-slate-100';
   };
 
   const getDueDateLabel = (dateStr: string) => {
-      const date = parseISO(dateStr);
+      const date = parseDate(dateStr);
       if (isPast(date) && !isToday(date)) return 'Overdue';
       if (isToday(date)) return 'Due Today';
       return format(date, 'MMM dd');
@@ -161,15 +167,15 @@ const Liabilities: React.FC = () => {
               {pendingLiabilities.length > 0 ? (
                   pendingLiabilities.map(liability => {
                       const account = accounts.find(a => a.id === liability.paymentAccountId);
-                      const isOverdue = isPast(parseISO(liability.dueDate)) && !isToday(parseISO(liability.dueDate));
+                      const isOverdue = isPast(parseDate(liability.dueDate)) && !isToday(parseDate(liability.dueDate));
                       
                       return (
                         <div key={liability.id} className={`bg-white p-4 rounded-xl border transition-all hover:shadow-md ${isOverdue ? 'border-rose-200 shadow-rose-100' : 'border-slate-200 shadow-sm'}`}>
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div className="flex items-start gap-4">
                                     <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${getDueDateColor(liability.dueDate)} flex-shrink-0`}>
-                                        <span className="text-xs font-bold uppercase">{parseISO(liability.dueDate).toLocaleString('default', { month: 'short' })}</span>
-                                        <span className="text-xl font-bold">{parseISO(liability.dueDate).getDate()}</span>
+                                        <span className="text-xs font-bold uppercase">{parseDate(liability.dueDate).toLocaleString('default', { month: 'short' })}</span>
+                                        <span className="text-xl font-bold">{parseDate(liability.dueDate).getDate()}</span>
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-slate-800 text-lg">{liability.name}</h4>
@@ -245,7 +251,7 @@ const Liabilities: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-slate-700 decoration-slate-400 line-through decoration-2">{liability.name}</h4>
                                     <div className="text-xs text-slate-400">
-                                        Due: {format(parseISO(liability.dueDate), 'MMM dd, yyyy')} • {account?.name}
+                                        Due: {format(parseDate(liability.dueDate), 'MMM dd, yyyy')} • {account?.name}
                                     </div>
                                 </div>
                             </div>
