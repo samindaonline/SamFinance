@@ -48,7 +48,7 @@ const Settings: React.FC = () => {
                   if (!success) {
                       alert("Failed to import data. Please check the file format.");
                   }
-                  // If success, page reloads automatically
+                  // If success, page reloads automatically via context
               }
           }
       };

@@ -148,28 +148,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const data = JSON.parse(jsonString);
         
         // Basic validation
-        if (!Array.isArray(data.accounts) || !Array.isArray(data.transactions)) {
-            console.error("Invalid data format: Missing accounts or transactions array.");
+        if (!data || typeof data !== 'object' || !Array.isArray(data.accounts)) {
+            console.error("Invalid data format: Missing accounts array.");
             return false;
         }
 
         // 1. Lock the auto-save mechanism
         isResetting.current = true;
 
-        // 2. Direct write to storage
+        // 2. Direct write to storage with fallback defaults
         storage.accounts.save(data.accounts);
-        storage.transactions.save(data.transactions);
-        storage.categories.save(data.categories || DEFAULT_CATEGORIES);
-        storage.liabilities.save(data.liabilities || []);
-        storage.receivables.save(data.receivables || []);
+        storage.transactions.save(Array.isArray(data.transactions) ? data.transactions : []);
+        storage.categories.save(Array.isArray(data.categories) ? data.categories : DEFAULT_CATEGORIES);
+        storage.liabilities.save(Array.isArray(data.liabilities) ? data.liabilities : []);
+        storage.receivables.save(Array.isArray(data.receivables) ? data.receivables : []);
         
         if (data.currency) {
             storage.currency.save(data.currency);
         }
 
         // 3. Reload
-        alert("Data imported successfully. The application will now reload.");
-        window.location.reload();
+        // Using a short timeout to ensure the storage write operation completes in the event loop (though localStorage is sync)
+        setTimeout(() => {
+            window.location.reload();
+        }, 50);
+        
         return true;
     } catch (error) {
         console.error("Failed to parse import data", error);
