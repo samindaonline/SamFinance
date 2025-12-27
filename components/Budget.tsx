@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, Save, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
@@ -425,8 +426,8 @@ const Budget: React.FC = () => {
                </div>
 
                {/* Create Modal */}
-               {isCreateModalOpen && (
-                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+               {isCreateModalOpen && createPortal(
+                   <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                        <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl animate-in fade-in zoom-in duration-200">
                            <h3 className="text-lg font-bold text-slate-800 mb-4">New Forecast Project</h3>
                            <form onSubmit={handleCreateProject}>
@@ -446,7 +447,8 @@ const Budget: React.FC = () => {
                                </div>
                            </form>
                        </div>
-                   </div>
+                   </div>,
+                   document.body
                )}
           </div>
       );
