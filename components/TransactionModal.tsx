@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { TransactionType, Account } from '../types';
 import { format } from 'date-fns';
 import { X, Plus, ChevronDown, Search, Check, Building, Wallet, User, Landmark, CreditCard, Layers } from 'lucide-react';
+import DatePicker from './DatePicker';
 
 // --- Helper Components & Constants for Custom Select ---
 
@@ -39,8 +40,20 @@ interface AccountSelectProps {
 const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selectedId, onChange, excludeId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const selectedAccount = accounts.find(a => a.id === selectedId);
+
+    // Close on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Filter and Group Accounts
     const groupedAccounts = useMemo(() => {
@@ -50,8 +63,6 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
         );
 
         const groups: Record<string, Account[]> = {};
-        
-        // Order of types for display
         const typeOrder = ['BANK', 'CASH', 'LIABILITY', 'ASSET', 'STAKEHOLDER', 'OTHER'];
         
         filtered.forEach(acc => {
@@ -59,7 +70,6 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
             groups[acc.type].push(acc);
         });
 
-        // Sort groups based on predefined order, then return array
         return typeOrder
             .filter(type => groups[type] && groups[type].length > 0)
             .map(type => ({
@@ -70,18 +80,18 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
     }, [accounts, excludeId, searchTerm]);
 
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
             
             {/* Trigger Button */}
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none flex items-center justify-between transition-all hover:border-blue-400"
+                className={`w-full px-4 py-2.5 bg-white border rounded-xl flex items-center justify-between transition-all outline-none ${isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-300 hover:border-blue-300'}`}
             >
                 {selectedAccount ? (
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: selectedAccount.color }}>
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white flex-shrink-0 shadow-sm" style={{ backgroundColor: selectedAccount.color }}>
                             {getAccountIcon(selectedAccount.type)}
                         </div>
                         <span className="text-slate-800 font-medium truncate">{selectedAccount.name}</span>
@@ -94,84 +104,80 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
                 ) : (
                     <span className="text-slate-400">Select an account...</span>
                 )}
-                <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
+                <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <>
-                    {/* Backdrop to close on click outside */}
-                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-                    
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl animate-in fade-in zoom-in duration-100 overflow-hidden">
-                        {/* Search Bar */}
-                        <div className="p-2 border-b border-slate-100 bg-slate-50">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                                <input 
-                                    autoFocus
-                                    type="text"
-                                    placeholder="Search accounts..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* List */}
-                        <div className="max-h-60 overflow-y-auto">
-                            {groupedAccounts.length > 0 ? (
-                                groupedAccounts.map(group => (
-                                    <div key={group.type}>
-                                        <div className="px-3 py-1.5 bg-slate-50/80 text-xs font-bold text-slate-500 uppercase tracking-wider sticky top-0 backdrop-blur-sm">
-                                            {group.label}
-                                        </div>
-                                        {group.items.map(acc => (
-                                            <button
-                                                key={acc.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    onChange(acc.id);
-                                                    setIsOpen(false);
-                                                }}
-                                                className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left ${
-                                                    selectedId === acc.id ? 'bg-blue-50/50' : ''
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <div 
-                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0" 
-                                                        style={{ backgroundColor: acc.color }}
-                                                    >
-                                                        {getAccountIcon(acc.type)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className={`text-sm font-medium truncate ${selectedId === acc.id ? 'text-blue-700' : 'text-slate-700'}`}>
-                                                            {acc.name}
-                                                        </div>
-                                                        {acc.parentAccountId && (
-                                                            <div className="text-[10px] text-slate-400 flex items-center">
-                                                                <Layers className="w-3 h-3 mr-1" /> Sub-account
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {selectedId === acc.id && (
-                                                    <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="p-4 text-center text-sm text-slate-500">
-                                    No accounts found.
-                                </div>
-                            )}
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-100 overflow-hidden flex flex-col max-h-[300px]">
+                    {/* Search Bar */}
+                    <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0 z-10">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                            <input 
+                                autoFocus
+                                type="text"
+                                placeholder="Search accounts..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white"
+                            />
                         </div>
                     </div>
-                </>
+
+                    {/* List */}
+                    <div className="overflow-y-auto custom-scrollbar flex-1">
+                        {groupedAccounts.length > 0 ? (
+                            groupedAccounts.map(group => (
+                                <div key={group.type}>
+                                    <div className="px-3 py-1.5 bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 backdrop-blur-sm">
+                                        {group.label}
+                                    </div>
+                                    {group.items.map(acc => (
+                                        <button
+                                            key={acc.id}
+                                            type="button"
+                                            onClick={() => {
+                                                onChange(acc.id);
+                                                setIsOpen(false);
+                                            }}
+                                            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left group ${
+                                                selectedId === acc.id ? 'bg-blue-50/50' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div 
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform" 
+                                                    style={{ backgroundColor: acc.color }}
+                                                >
+                                                    {getAccountIcon(acc.type)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className={`text-sm font-medium truncate ${selectedId === acc.id ? 'text-blue-700' : 'text-slate-700'}`}>
+                                                        {acc.name}
+                                                    </div>
+                                                    {acc.parentAccountId && (
+                                                        <div className="text-[10px] text-slate-400 flex items-center">
+                                                            <Layers className="w-3 h-3 mr-1" /> Sub-account
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {selectedId === acc.id && (
+                                                <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="p-8 text-center text-sm text-slate-500 flex flex-col items-center">
+                                <Search className="w-8 h-8 text-slate-300 mb-2" />
+                                No accounts found.
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -255,144 +261,150 @@ const TransactionModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
             <h3 className="text-xl font-bold text-slate-800">Record Transaction</h3>
-            <button onClick={() => setTransactionModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+            <button 
+                onClick={() => setTransactionModalOpen(false)} 
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+            >
                 <X className="w-5 h-5" />
             </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Type Selector */}
-            <div className="flex bg-slate-100 p-1 rounded-xl">
-                {(['EXPENSE', 'INCOME', 'TRANSFER'] as TransactionType[]).map((tab) => (
-                    <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setType(tab)}
-                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                            type === tab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                        {tab.charAt(0) + tab.slice(1).toLowerCase()}
-                    </button>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                    <input
-                        type="date"
-                        required
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+        {/* Scrollable Form Body */}
+        <div className="overflow-y-auto custom-scrollbar p-6 flex-1">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Type Selector */}
+                <div className="flex bg-slate-100 p-1.5 rounded-xl">
+                    {(['EXPENSE', 'INCOME', 'TRANSFER'] as TransactionType[]).map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setType(tab)}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                                type === tab ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {tab.charAt(0) + tab.slice(1).toLowerCase()}
+                        </button>
+                    ))}
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
-                    <input
-                        type="number"
-                        required
-                        step="0.01"
-                        min="0"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="0.00"
-                    />
-                </div>
-            </div>
 
-            {/* Custom Account Selector - Source */}
-            <AccountSelect 
-                label={type === 'INCOME' ? 'To Account' : 'From Account'}
-                accounts={accounts}
-                selectedId={accountId}
-                onChange={setAccountId}
-            />
-
-            {/* Custom Account Selector - Destination (Transfer only) */}
-            {type === 'TRANSFER' && (
-                <AccountSelect 
-                    label="To Account"
-                    accounts={accounts}
-                    selectedId={toAccountId}
-                    onChange={setToAccountId}
-                    excludeId={accountId}
-                />
-            )}
-
-            {type !== 'TRANSFER' && (
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Tags (Multiple)</label>
-                    <div className="p-3 border border-slate-200 rounded-xl bg-slate-50 min-h-[100px]">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                             {categories.map(cat => (
-                                 <button
-                                    key={cat}
-                                    type="button"
-                                    onClick={() => toggleTag(cat)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-                                        selectedTags.includes(cat)
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                                    }`}
-                                 >
-                                    {cat}
-                                 </button>
-                             ))}
-                        </div>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text"
-                                value={newTagInput}
-                                onChange={(e) => setNewTagInput(e.target.value)}
-                                placeholder="New tag..."
-                                className="flex-1 px-3 py-1 text-sm border border-slate-300 rounded-lg outline-none focus:border-blue-500"
-                            />
-                            <button 
-                                type="button" 
-                                onClick={handleAddNewTag}
-                                className="p-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
-                            >
-                                <Plus className="w-5 h-5" />
-                            </button>
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <DatePicker
+                            label="Date"
+                            value={date}
+                            onChange={setDate}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                        <input
+                            type="number"
+                            required
+                            step="0.01"
+                            min="0"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300"
+                            placeholder="0.00"
+                        />
                     </div>
                 </div>
-            )}
 
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
-                <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="What was this for?"
+                {/* Custom Account Selector - Source */}
+                <AccountSelect 
+                    label={type === 'INCOME' ? 'To Account' : 'From Account'}
+                    accounts={accounts}
+                    selectedId={accountId}
+                    onChange={setAccountId}
                 />
-            </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-                <button
-                    type="button"
-                    onClick={() => setTransactionModalOpen(false)}
-                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
-                >
-                    Save
-                </button>
-            </div>
-        </form>
+                {/* Custom Account Selector - Destination (Transfer only) */}
+                {type === 'TRANSFER' && (
+                    <AccountSelect 
+                        label="To Account"
+                        accounts={accounts}
+                        selectedId={toAccountId}
+                        onChange={setToAccountId}
+                        excludeId={accountId}
+                    />
+                )}
+
+                {type !== 'TRANSFER' && (
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tags (Multiple)</label>
+                        <div className="p-3 border border-slate-200 rounded-xl bg-slate-50 min-h-[100px] flex flex-col">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => toggleTag(cat)}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                                            selectedTags.includes(cat)
+                                            ? 'bg-blue-600 text-white border-blue-600'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:shadow-sm'
+                                        }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 mt-auto">
+                                <input 
+                                    type="text"
+                                    value={newTagInput}
+                                    onChange={(e) => setNewTagInput(e.target.value)}
+                                    placeholder="New tag..."
+                                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-blue-500 bg-white"
+                                />
+                                <button 
+                                    type="button" 
+                                    onClick={handleAddNewTag}
+                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium text-sm transition-colors"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
+                    <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300"
+                        placeholder="What was this for?"
+                    />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-2">
+                    <button
+                        type="button"
+                        onClick={() => setTransactionModalOpen(false)}
+                        className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-200 active:scale-95"
+                    >
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
       </div>
     </div>
   );

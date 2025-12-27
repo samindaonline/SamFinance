@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw } from 'lucide-react';
+import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { Receivable } from '../types';
+import DatePicker from './DatePicker';
 
 const Receivables: React.FC = () => {
-  const { receivables, accounts, addReceivable, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
+  const { receivables, accounts, addReceivable, updateReceivable, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // Form State
   const [name, setName] = useState('');
@@ -19,16 +21,41 @@ const Receivables: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (targetAccountId) {
-        addReceivable({
-            name,
-            description,
-            amount: Number(amount),
-            expectedDate,
-            targetAccountId,
-            type
-        });
+        if (editingId) {
+             updateReceivable(editingId, {
+                name,
+                description,
+                amount: Number(amount),
+                expectedDate,
+                targetAccountId,
+                type
+            });
+        } else {
+            addReceivable({
+                name,
+                description,
+                amount: Number(amount),
+                expectedDate,
+                targetAccountId,
+                type
+            });
+        }
         resetForm();
     }
+  };
+
+  const handleEdit = (receivable: Receivable) => {
+    setEditingId(receivable.id);
+    setName(receivable.name);
+    setDescription(receivable.description);
+    setAmount(receivable.amount.toString());
+    setExpectedDate(receivable.expectedDate);
+    setTargetAccountId(receivable.targetAccountId);
+    setType(receivable.type);
+    setIsAdding(true);
+    
+    // Smooth scroll to top to see the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
@@ -38,6 +65,7 @@ const Receivables: React.FC = () => {
     setExpectedDate(format(new Date(), 'yyyy-MM-dd'));
     setTargetAccountId('');
     setType('ONE_TIME');
+    setEditingId(null);
     setIsAdding(false);
   };
 
@@ -65,19 +93,21 @@ const Receivables: React.FC = () => {
            <h2 className="text-2xl font-bold text-slate-800">Receivables & Income</h2>
            <p className="text-slate-500 text-sm">Track expected future income and payments owed to you.</p>
         </div>
-        <button
-          onClick={() => setIsAdding(true)}
-          className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Receivable
-        </button>
+        {!isAdding && (
+            <button
+            onClick={() => setIsAdding(true)}
+            className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
+            >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Receivable
+            </button>
+        )}
       </div>
 
-      {/* Add Form */}
+      {/* Add/Edit Form */}
       {isAdding && (
           <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-lg animate-in fade-in slide-in-from-top-4 duration-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Add Expected Income</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">{editingId ? 'Edit Income' : 'Add Expected Income'}</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
@@ -113,13 +143,11 @@ const Receivables: React.FC = () => {
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Expected Date</label>
-                          <input 
-                            required
-                            type="date" 
+                          <DatePicker 
+                            label="Expected Date"
                             value={expectedDate}
-                            onChange={e => setExpectedDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                            onChange={setExpectedDate}
+                            required
                           />
                       </div>
                       <div>
@@ -161,7 +189,7 @@ const Receivables: React.FC = () => {
                         type="submit" 
                         className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
                       >
-                          Save Income
+                          {editingId ? 'Save Changes' : 'Save Income'}
                       </button>
                   </div>
               </form>
@@ -223,6 +251,13 @@ const Receivables: React.FC = () => {
                                     </div>
                                     <div className="flex gap-2">
                                         <button 
+                                            onClick={() => handleEdit(receivable)}
+                                            className="p-2 bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Edit2 className="w-5 h-5" />
+                                        </button>
+                                        <button 
                                             onClick={() => toggleReceivableStatus(receivable.id)}
                                             className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors"
                                             title="Mark as Received"
@@ -275,6 +310,12 @@ const Receivables: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-4">
                                 <span className="font-bold text-emerald-600/70">+{formatCurrency(receivable.amount)}</span>
+                                <button 
+                                    onClick={() => handleEdit(receivable)}
+                                    className="text-xs text-slate-400 hover:text-blue-600 hover:underline"
+                                >
+                                    Edit
+                                </button>
                                 <button 
                                     onClick={() => toggleReceivableStatus(receivable.id)}
                                     className="text-xs text-blue-600 hover:underline"

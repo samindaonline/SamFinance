@@ -83,6 +83,7 @@ export interface FinanceContextType {
   toggleLiabilityStatus: (id: string) => void;
   deleteLiability: (id: string) => void;
   addReceivable: (receivable: Omit<Receivable, 'id' | 'status'>) => void;
+  updateReceivable: (id: string, receivable: Partial<Receivable>) => void;
   toggleReceivableStatus: (id: string) => void;
   deleteReceivable: (id: string) => void;
   addBudgetProject: (name: string) => void;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
+import DatePicker from './DatePicker';
 
 const Liabilities: React.FC = () => {
   const { liabilities, accounts, addLiability, toggleLiabilityStatus, deleteLiability, formatCurrency } = useFinance();
@@ -109,13 +110,11 @@ const Liabilities: React.FC = () => {
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
-                          <input 
-                            required
-                            type="date" 
+                          <DatePicker 
+                            label="Due Date"
                             value={dueDate}
-                            onChange={e => setDueDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                            onChange={setDueDate}
+                            required
                           />
                       </div>
                       <div className="md:col-span-2">

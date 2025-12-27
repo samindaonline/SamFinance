@@ -3,6 +3,7 @@ import { useFinance } from '../context/FinanceContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, Save, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, isBefore, isSameMonth, startOfDay, isAfter, getDate, setDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
+import DatePicker from './DatePicker';
 
 // --- Sub-components for better organization ---
 
@@ -474,9 +475,9 @@ const Budget: React.FC = () => {
               </button>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col xl:flex-row gap-8">
               {/* Left Column: Items & Configuration */}
-              <div className="flex-1 space-y-8">
+              <div className="flex-1 space-y-8 min-w-0">
                   
                   {/* Item List */}
                   <div className="space-y-4">
@@ -488,11 +489,11 @@ const Budget: React.FC = () => {
                           return (
                             <div key={item.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="p-4 flex justify-between items-start bg-slate-50/50 border-b border-slate-100">
-                                    <div>
+                                    <div className="min-w-0 pr-4">
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-bold text-slate-800">{item.name}</h4>
+                                            <h4 className="font-bold text-slate-800 truncate">{item.name}</h4>
                                             {item.link && (
-                                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 flex-shrink-0">
                                                     <ExternalLink className="w-3 h-3" />
                                                 </a>
                                             )}
@@ -501,7 +502,7 @@ const Budget: React.FC = () => {
                                             {formatCurrency(item.totalPrice)}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-shrink-0">
                                         <button 
                                             onClick={() => deleteItem(item.id)} 
                                             className="text-slate-400 hover:text-rose-500 p-1"
@@ -552,7 +553,7 @@ const Budget: React.FC = () => {
                                                                             <span className="text-slate-600">{format(parseISO(inst.date), 'MMM dd, yyyy')}</span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{acc?.name}</span>
+                                                                            <span className="text-xs px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 truncate max-w-[100px]">{acc?.name}</span>
                                                                             <span className="font-bold text-slate-700">{formatCurrency(inst.amount)}</span>
                                                                         </div>
                                                                     </div>
@@ -629,38 +630,38 @@ const Budget: React.FC = () => {
                   {/* Projected Cash Flow Timeline */}
                   {timelineEvents.length > 0 && (
                       <div className="mt-8">
-                          <div className="flex justify-between items-center mb-4">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                               <h3 className="font-bold text-slate-800 flex items-center">
                                  <Calendar className="w-5 h-5 mr-2 text-slate-500" />
                                  Projected Cash Flow
                               </h3>
-                              <div className="flex gap-2">
-                                  <input 
-                                    type="date" 
-                                    value={filterStartDate}
-                                    onChange={e => setFilterStartDate(e.target.value)}
-                                    className="px-2 py-1 border border-slate-200 rounded-lg text-xs"
-                                  />
+                              <div className="flex gap-2 w-full sm:w-auto">
+                                  <div className="w-1/2 sm:w-36">
+                                    <DatePicker 
+                                        value={filterStartDate}
+                                        onChange={setFilterStartDate}
+                                    />
+                                  </div>
                                   <span className="text-slate-400 self-center">-</span>
-                                  <input 
-                                    type="date" 
-                                    value={filterEndDate}
-                                    onChange={e => setFilterEndDate(e.target.value)}
-                                    className="px-2 py-1 border border-slate-200 rounded-lg text-xs"
-                                  />
+                                  <div className="w-1/2 sm:w-36">
+                                    <DatePicker 
+                                        value={filterEndDate}
+                                        onChange={setFilterEndDate}
+                                    />
+                                  </div>
                               </div>
                           </div>
                           
                           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                              <div className="overflow-x-auto">
+                              <div className="overflow-x-auto custom-scrollbar">
                                   <table className="w-full text-left text-sm">
                                       <thead className="bg-slate-50 border-b border-slate-100">
                                           <tr>
-                                              <th className="px-4 py-3 font-semibold text-slate-500">Date</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500">Item</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500">Account</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right">Amount</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right">Balance</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Date</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Item</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Account</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">Amount</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">Balance</th>
                                           </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100">
@@ -682,33 +683,33 @@ const Budget: React.FC = () => {
                                                       <td className="px-4 py-3">
                                                           <div className="flex items-center gap-2">
                                                               {isProject ? (
-                                                                  <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded">
+                                                                  <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded flex-shrink-0">
                                                                       <Calculator className="w-3 h-3" />
                                                                   </div>
                                                               ) : isIncome ? (
-                                                                  <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded">
+                                                                  <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded flex-shrink-0">
                                                                       <ArrowDownRight className="w-3 h-3" />
                                                                   </div>
                                                               ) : (
-                                                                  <div className="p-1.5 bg-rose-50 text-rose-600 rounded">
+                                                                  <div className="p-1.5 bg-rose-50 text-rose-600 rounded flex-shrink-0">
                                                                       <ScrollText className="w-3 h-3" />
                                                                   </div>
                                                               )}
-                                                              <span className="font-medium text-slate-700">{event.name}</span>
+                                                              <span className="font-medium text-slate-700 truncate max-w-[150px]">{event.name}</span>
                                                           </div>
                                                       </td>
                                                       <td className="px-4 py-3 text-slate-500">
                                                           {acc ? (
                                                               <div className="flex items-center gap-1.5">
-                                                                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: acc.color}} />
-                                                                  {acc.name}
+                                                                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: acc.color}} />
+                                                                  <span className="truncate max-w-[120px]">{acc.name}</span>
                                                               </div>
                                                           ) : '-'}
                                                       </td>
-                                                      <td className={`px-4 py-3 font-bold text-right ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                      <td className={`px-4 py-3 font-bold text-right whitespace-nowrap ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                           {isIncome ? '+' : '-'}{formatCurrency(event.amount)}
                                                       </td>
-                                                      <td className="px-4 py-3 text-right font-mono text-slate-600 text-xs">
+                                                      <td className="px-4 py-3 text-right font-mono text-slate-600 text-xs whitespace-nowrap">
                                                           {event.runningBalance !== undefined ? formatCurrency(event.runningBalance) : '-'}
                                                       </td>
                                                   </tr>
@@ -723,7 +724,7 @@ const Budget: React.FC = () => {
               </div>
 
               {/* Right Column: Compatibility Overview */}
-              <div className="lg:w-96 flex-shrink-0">
+              <div className="xl:w-96 w-full flex-shrink-0">
                   <div className="sticky top-6 space-y-4">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                           <TrendingUp className="w-5 h-5 text-emerald-500" />
@@ -862,35 +863,47 @@ const PaymentBuilder: React.FC<{
 
             <div className="space-y-3">
                 {installments.map((inst, idx) => (
-                    <div key={inst.id} className="flex flex-wrap md:flex-nowrap gap-2 items-center">
-                         <span className="text-xs font-bold text-slate-400 w-6">#{idx + 1}</span>
-                        <input 
-                            type="date" 
-                            value={inst.date}
-                            onChange={e => updateRow(inst.id, 'date', e.target.value)}
-                            className="w-full md:w-auto px-2 py-1.5 border border-slate-300 rounded-lg text-sm"
-                        />
-                        <select
-                            value={inst.accountId}
-                            onChange={e => updateRow(inst.id, 'accountId', e.target.value)}
-                            className="flex-1 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white"
-                        >
-                            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                        </select>
-                        <div className="relative w-full md:w-32">
+                    <div key={inst.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg md:bg-transparent md:p-0">
+                        <div className="col-span-1 text-xs font-bold text-slate-400">#{idx + 1}</div>
+                        
+                        <div className="col-span-11 md:col-span-4">
+                            <DatePicker
+                                value={inst.date}
+                                onChange={(val) => updateRow(inst.id, 'date', val)}
+                            />
+                        </div>
+                        
+                        <div className="col-span-1 md:hidden"></div> {/* Spacer for mobile alignment */}
+                        
+                        <div className="col-span-11 md:col-span-4">
+                            <select
+                                value={inst.accountId}
+                                onChange={e => updateRow(inst.id, 'accountId', e.target.value)}
+                                className="w-full px-2 py-2 border border-slate-300 rounded-xl text-sm bg-white"
+                            >
+                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+                        
+                        <div className="col-span-1 md:hidden"></div> {/* Spacer for mobile alignment */}
+
+                        <div className="col-span-10 md:col-span-3 relative">
                             <input 
                                 type="number" 
                                 value={inst.amount}
                                 onChange={e => updateRow(inst.id, 'amount', Number(e.target.value))}
-                                className="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg text-sm"
+                                className="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-xl text-sm"
                             />
                             <DollarSign className="w-3 h-3 absolute left-2 top-2.5 text-slate-400" />
                         </div>
-                        {installments.length > 1 && (
-                            <button onClick={() => removeRow(inst.id)} className="text-slate-400 hover:text-rose-500">
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
+                        
+                        <div className="col-span-1 flex justify-end">
+                            {installments.length > 1 && (
+                                <button onClick={() => removeRow(inst.id)} className="text-slate-400 hover:text-rose-500">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -135,6 +135,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setReceivables(prev => [...prev, newReceivable]);
   };
 
+  const updateReceivable = (id: string, updates: Partial<Receivable>) => {
+    setReceivables(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  };
+
   const toggleReceivableStatus = (id: string) => {
     setReceivables(prev => prev.map(r => r.id === id ? { ...r, status: r.status === 'PENDING' ? 'RECEIVED' : 'PENDING' } : r));
   };
@@ -268,6 +272,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toggleLiabilityStatus,
     deleteLiability,
     addReceivable,
+    updateReceivable,
     toggleReceivableStatus,
     deleteReceivable,
     addBudgetProject,

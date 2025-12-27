@@ -15,8 +15,8 @@ const Transactions: React.FC = () => {
   }, [transactions, searchTerm]);
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col">
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
         <div>
            <h2 className="text-2xl font-bold text-slate-800">Transactions</h2>
            <p className="text-slate-500 text-sm">Record your expenses, income, and transfers.</p>
@@ -31,37 +31,36 @@ const Transactions: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="sticky top-0 z-10 md:static">
+      <div className="sticky top-0 z-10 md:static flex-shrink-0">
           <div className="flex items-center space-x-3 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-sm backdrop-blur-xl bg-white/90">
             <Search className="w-5 h-5 text-slate-400" />
             <input 
                 type="text" 
-                placeholder="Search..." 
+                placeholder="Search description or tags..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 outline-none text-slate-700 placeholder-slate-400 bg-transparent text-sm md:text-base"
             />
             {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="p-1 rounded-full bg-slate-100 text-slate-400">
+                <button onClick={() => setSearchTerm('')} className="p-1 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600">
                     <span className="sr-only">Clear</span>
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             )}
-            <Filter className="w-5 h-5 text-slate-400 cursor-pointer hover:text-slate-600" />
           </div>
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="hidden md:flex flex-col flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
             <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                     <tr>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Category / Tags</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Amount</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Category / Tags</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Account</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Amount</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Action</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -78,13 +77,13 @@ const Transactions: React.FC = () => {
                         };
 
                         return (
-                            <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                            <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
                                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                                     {format(new Date(t.date), 'MMM dd, yyyy')}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center">
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0 ${
                                             t.type === 'INCOME' ? 'bg-emerald-100 text-emerald-600' :
                                             t.type === 'EXPENSE' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
                                         }`}>
@@ -92,8 +91,8 @@ const Transactions: React.FC = () => {
                                              t.type === 'EXPENSE' ? <ArrowDownRight className="w-4 h-4"/> : 
                                              <ArrowRightLeft className="w-4 h-4"/>}
                                         </span>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-800">{t.description || (t.tags.length > 0 ? t.tags[0] : 'Uncategorized')}</p>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-slate-800 truncate max-w-[200px]">{t.description || (t.tags.length > 0 ? t.tags[0] : 'Uncategorized')}</p>
                                             <div className="flex flex-wrap gap-1 mt-1">
                                                 {t.tags.map(tag => (
                                                     <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200">
@@ -107,14 +106,14 @@ const Transactions: React.FC = () => {
                                 <td className="px-6 py-4 text-sm text-slate-600">
                                     {t.type === 'TRANSFER' ? (
                                         <div className="flex flex-col">
-                                            <span className="text-xs text-slate-400">From: <span className="text-slate-600">{formatAccName(acc, accParent)}</span></span>
-                                            <span className="text-xs text-slate-400">To: <span className="text-slate-600">{formatAccName(toAcc, toAccParent)}</span></span>
+                                            <span className="text-xs text-slate-400">From: <span className="text-slate-600 font-medium">{formatAccName(acc, accParent)}</span></span>
+                                            <span className="text-xs text-slate-400">To: <span className="text-slate-600 font-medium">{formatAccName(toAcc, toAccParent)}</span></span>
                                         </div>
                                     ) : (
-                                        formatAccName(acc, accParent)
+                                        <span className="font-medium">{formatAccName(acc, accParent)}</span>
                                     )}
                                 </td>
-                                <td className={`px-6 py-4 text-sm font-bold text-right ${
+                                <td className={`px-6 py-4 text-sm font-bold text-right whitespace-nowrap ${
                                     t.type === 'INCOME' ? 'text-emerald-600' : 
                                     t.type === 'EXPENSE' ? 'text-rose-600' : 'text-slate-700'
                                 }`}>
@@ -122,20 +121,31 @@ const Transactions: React.FC = () => {
                                     {formatCurrency(t.amount)}
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                    <button onClick={() => deleteTransaction(t.id)} className="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-slate-100 rounded-full">
+                                    <button 
+                                        onClick={() => { if(confirm('Are you sure?')) deleteTransaction(t.id); }} 
+                                        className="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        title="Delete Transaction"
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </td>
                             </tr>
                         );
                     })}
+                    {filteredTransactions.length === 0 && (
+                        <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                No transactions found matching your criteria.
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
         </div>
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-3 pb-safe">
         {filteredTransactions.map(t => {
             const acc = accounts.find(a => a.id === t.accountId);
             const toAcc = accounts.find(a => a.id === t.toAccountId);
@@ -144,7 +154,7 @@ const Transactions: React.FC = () => {
                 <div key={t.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                             <span className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                             <span className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                                 t.type === 'INCOME' ? 'bg-emerald-100 text-emerald-600' :
                                 t.type === 'EXPENSE' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
                             }`}>
@@ -152,7 +162,7 @@ const Transactions: React.FC = () => {
                                  t.type === 'EXPENSE' ? <ArrowDownRight className="w-5 h-5"/> : 
                                  <ArrowRightLeft className="w-5 h-5"/>}
                             </span>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="font-semibold text-slate-800 text-sm line-clamp-1">{t.description || "No description"}</p>
                                 <div className="flex items-center text-xs text-slate-500 mt-0.5">
                                     <Calendar className="w-3 h-3 mr-1" />
@@ -160,8 +170,8 @@ const Transactions: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col items-end">
-                            <span className={`text-base font-bold ${
+                        <div className="flex flex-col items-end flex-shrink-0 ml-2">
+                            <span className={`text-base font-bold whitespace-nowrap ${
                                 t.type === 'INCOME' ? 'text-emerald-600' : 
                                 t.type === 'EXPENSE' ? 'text-rose-600' : 'text-slate-700'
                             }`}>
@@ -187,7 +197,7 @@ const Transactions: React.FC = () => {
                                 <span className="text-slate-500 flex items-center gap-1 mt-0.5"><Tag className="w-3 h-3"/> Tags</span>
                                 <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
                                     {t.tags.map(tag => (
-                                        <span key={tag} className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-slate-600">
+                                        <span key={tag} className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-slate-600 shadow-sm">
                                             {tag}
                                         </span>
                                     ))}
@@ -198,8 +208,8 @@ const Transactions: React.FC = () => {
 
                     <div className="mt-3 flex justify-end">
                         <button 
-                            onClick={() => deleteTransaction(t.id)} 
-                            className="flex items-center text-rose-500 text-xs font-medium px-3 py-1.5 hover:bg-rose-50 rounded-lg transition-colors"
+                            onClick={() => { if(confirm('Delete transaction?')) deleteTransaction(t.id); }} 
+                            className="flex items-center text-rose-500 text-xs font-bold px-3 py-1.5 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
                         >
                             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                             Delete
