@@ -98,6 +98,32 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // We preserve the currency setting as that's a preference
   };
 
+  const importData = (jsonString: string): boolean => {
+    try {
+        const data = JSON.parse(jsonString);
+        
+        // Basic validation
+        if (!Array.isArray(data.accounts) || !Array.isArray(data.transactions)) {
+            console.error("Invalid data format: Missing accounts or transactions array.");
+            return false;
+        }
+
+        setAccounts(data.accounts);
+        setTransactions(data.transactions);
+        if (Array.isArray(data.categories)) {
+            setCategories(data.categories);
+        }
+        if (data.currency && typeof data.currency === 'string') {
+            setCurrencyState(data.currency);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Failed to parse import data", error);
+        return false;
+    }
+  };
+
   const formatCurrency = useCallback((amount: number) => {
     const currObj = CURRENCIES.find(c => c.code === currency);
     const symbol = currObj ? currObj.symbol : currency;
@@ -163,7 +189,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     currency,
     setCurrency,
     formatCurrency,
-    resetData
+    resetData,
+    importData
   };
 
   if (!isLoaded) return null;
