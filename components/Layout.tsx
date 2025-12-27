@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, ScrollText, ChevronRight, HandCoins } from 'lucide-react';
 import TransactionModal from './TransactionModal';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'accounts' | 'transactions' | 'categories' | 'settings';
-  setView: (view: 'dashboard' | 'accounts' | 'transactions' | 'categories' | 'settings') => void;
+  currentView: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings';
+  setView: (view: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings') => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
@@ -15,6 +15,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'accounts', icon: Wallet, label: 'Accounts' },
     { id: 'transactions', icon: CreditCard, label: 'Transactions' },
+    { id: 'receivables', icon: HandCoins, label: 'Receivables' },
+    { id: 'liabilities', icon: ScrollText, label: 'Liabilities' },
     { id: 'categories', icon: Tags, label: 'Categories' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ] as const;
@@ -79,7 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
                   {navItems.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => handleNavClick(item.id)}
+                        onClick={() => handleNavClick(item.id as any)}
                         className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group ${
                             currentView === item.id
                                 ? 'bg-blue-50 text-blue-700 font-semibold'

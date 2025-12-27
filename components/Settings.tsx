@@ -5,7 +5,7 @@ import { Coins, Check, Trash2, AlertTriangle, Download, Upload, FileJson } from 
 import { format } from 'date-fns';
 
 const Settings: React.FC = () => {
-  const { currency, setCurrency, resetData, accounts, transactions, categories, importData } = useFinance();
+  const { currency, setCurrency, resetData, accounts, transactions, categories, liabilities, receivables, importData } = useFinance();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReset = () => {
@@ -22,7 +22,9 @@ const Settings: React.FC = () => {
         currency,
         accounts,
         transactions,
-        categories
+        categories,
+        liabilities,
+        receivables
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

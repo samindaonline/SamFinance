@@ -22,10 +22,33 @@ export interface Account {
   description?: string;
 }
 
+export interface Liability {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  dueDate: string; // ISO string YYYY-MM-DD
+  paymentAccountId: string; // The account intended to pay this
+  status: 'PENDING' | 'PAID';
+}
+
+export interface Receivable {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  expectedDate: string; // ISO string YYYY-MM-DD
+  targetAccountId: string; // The account intended to receive this
+  status: 'PENDING' | 'RECEIVED';
+  type: 'ONE_TIME' | 'RECURRING';
+}
+
 export interface FinanceContextType {
   accounts: Account[];
   transactions: Transaction[];
   categories: string[];
+  liabilities: Liability[];
+  receivables: Receivable[];
   addAccount: (account: Omit<Account, 'id'>) => void;
   updateAccount: (id: string, account: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
@@ -33,6 +56,12 @@ export interface FinanceContextType {
   deleteTransaction: (id: string) => void;
   addCategory: (category: string) => void;
   removeCategory: (category: string) => void;
+  addLiability: (liability: Omit<Liability, 'id' | 'status'>) => void;
+  toggleLiabilityStatus: (id: string) => void;
+  deleteLiability: (id: string) => void;
+  addReceivable: (receivable: Omit<Receivable, 'id' | 'status'>) => void;
+  toggleReceivableStatus: (id: string) => void;
+  deleteReceivable: (id: string) => void;
   getAccountBalance: (accountId: string) => number;
   totalNetWorth: number;
   isTransactionModalOpen: boolean;

@@ -6,8 +6,10 @@ import Accounts from './components/Accounts';
 import Transactions from './components/Transactions';
 import Categories from './components/Categories';
 import Settings from './components/Settings';
+import Liabilities from './components/Liabilities';
+import Receivables from './components/Receivables';
 
-type View = 'dashboard' | 'accounts' | 'transactions' | 'categories' | 'settings';
+type View = 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -20,6 +22,10 @@ const App: React.FC = () => {
         return <Accounts />;
       case 'transactions':
         return <Transactions />;
+      case 'liabilities':
+        return <Liabilities />;
+      case 'receivables':
+        return <Receivables />;
       case 'categories':
         return <Categories />;
       case 'settings':

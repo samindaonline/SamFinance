@@ -1,28 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { ArrowUpRight, ArrowDownRight, Activity, Wallet, PieChart as PieIcon, Plus, Calendar, Filter, TrendingUp } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, PieChart, Pie, Legend, LineChart, Line } from 'recharts';
-import { format, subDays, isAfter, parseISO, subMonths, isSameDay, startOfDay } from 'date-fns';
+import { ArrowUpRight, ArrowDownRight, Activity, Wallet, PieChart as PieIcon, Plus, Calendar, TrendingUp, ScrollText, X, ChevronRight, HandCoins } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
+import { format, subDays, isAfter, parseISO, subMonths, isSameDay, startOfDay, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 
 const Dashboard: React.FC = () => {
-  const { transactions, totalNetWorth, getAccountBalance, accounts, setTransactionModalOpen, formatCurrency, categories } = useFinance();
+  const { transactions, liabilities, receivables, totalNetWorth, getAccountBalance, accounts, setTransactionModalOpen, formatCurrency } = useFinance();
   
-  const [timeRange, setTimeRange] = useState<'30' | '90'>('30');
-  const [tagFilter, setTagFilter] = useState<string>('ALL');
   const [netWorthRange, setNetWorthRange] = useState<'3M' | '6M' | '1Y'>('6M');
+  const [showLiabilityModal, setShowLiabilityModal] = useState(false);
+  const [showReceivableModal, setShowReceivableModal] = useState(false);
 
-  // --- Filter Logic ---
+  // --- Filter Logic (Fixed to 30 days, All tags) ---
   const cutoffDate = useMemo(() => {
-    return subDays(new Date(), parseInt(timeRange));
-  }, [timeRange]);
+    return subDays(new Date(), 30);
+  }, []);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const isDateValid = isAfter(parseISO(t.date), cutoffDate);
-      const isTagValid = tagFilter === 'ALL' || t.tags.includes(tagFilter);
-      return isDateValid && isTagValid;
+      return isDateValid;
     });
-  }, [transactions, cutoffDate, tagFilter]);
+  }, [transactions, cutoffDate]);
 
   // Calculate monthly stats (based on current month regardless of filter, standard dashboard behavior)
   const currentMonth = new Date().getMonth();
@@ -40,9 +39,44 @@ const Dashboard: React.FC = () => {
     .filter(t => t.type === 'EXPENSE')
     .reduce((acc, t) => acc + t.amount, 0);
 
-  // --- Chart 1: Activity (Area) based on Time Range ---
+  // --- Liability Forecast Logic ---
+  const liabilityForecast = useMemo(() => {
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(addMonths(today, 3)); // Current month + 3 months forward
+
+    return liabilities
+        .filter(l => {
+            if (l.status !== 'PENDING') return false;
+            const d = parseISO(l.dueDate);
+            return d >= start && d <= end;
+        })
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  }, [liabilities]);
+
+  const totalForecastLiability = liabilityForecast.reduce((sum, l) => sum + l.amount, 0);
+
+  // --- Receivable Forecast Logic ---
+  const receivableForecast = useMemo(() => {
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(addMonths(today, 3)); // Current month + 3 months forward
+
+    return receivables
+        .filter(r => {
+            if (r.status !== 'PENDING') return false;
+            const d = parseISO(r.expectedDate);
+            return d >= start && d <= end;
+        })
+        .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
+  }, [receivables]);
+
+  const totalForecastReceivable = receivableForecast.reduce((sum, r) => sum + r.amount, 0);
+
+
+  // --- Chart 1: Activity (Area) based on Time Range (Fixed 30 days) ---
   const activityData = useMemo(() => {
-    const days = parseInt(timeRange);
+    const days = 30;
     const data = [];
     for (let i = days; i >= 0; i--) {
       const d = new Date();
@@ -60,9 +94,9 @@ const Dashboard: React.FC = () => {
       });
     }
     return data;
-  }, [filteredTransactions, timeRange]);
+  }, [filteredTransactions]);
 
-  // --- Chart 2: Asset Distribution (Stacked Bar) - Unaffected by filters usually ---
+  // --- Chart 2: Asset Distribution (Stacked Bar) ---
   const assetData = useMemo(() => {
     const roots = accounts.filter(a => !a.parentAccountId);
     return roots.map(root => {
@@ -231,38 +265,8 @@ const Dashboard: React.FC = () => {
             <p className="text-slate-500 text-sm">Here is what's happening with your money.</p>
         </div>
         
-        {/* Responsive Controls Container */}
-        <div className="w-full xl:w-auto flex flex-col sm:flex-row gap-3">
-             {/* Time & Filter Row */}
-             <div className="flex flex-1 gap-3">
-                <div className="flex bg-white border border-slate-200 rounded-xl p-1 shadow-sm flex-1 sm:flex-none justify-center sm:justify-start">
-                    <button 
-                        onClick={() => setTimeRange('30')}
-                        className={`flex-1 sm:flex-none px-3 py-2 text-xs font-medium rounded-lg transition-colors ${timeRange === '30' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                        30 Days
-                    </button>
-                    <button 
-                        onClick={() => setTimeRange('90')}
-                        className={`flex-1 sm:flex-none px-3 py-2 text-xs font-medium rounded-lg transition-colors ${timeRange === '90' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                        3 Months
-                    </button>
-                </div>
-
-                <div className="relative flex-1 sm:flex-none">
-                    <select 
-                        value={tagFilter} 
-                        onChange={(e) => setTagFilter(e.target.value)}
-                        className="w-full appearance-none bg-white border border-slate-200 text-slate-700 pl-9 pr-8 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium shadow-sm text-sm h-full truncate max-w-[150px] sm:max-w-none"
-                    >
-                        <option value="ALL">All Tags</option>
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <Filter className="absolute left-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
-             </div>
-
+        {/* Actions */}
+        <div className="w-full xl:w-auto flex justify-end">
             <button 
                 onClick={() => setTransactionModalOpen(true)}
                 className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
@@ -382,7 +386,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
             <Activity className="w-4 h-4 mr-2 text-slate-400" /> 
-            Income vs Expenses
+            Income vs Expenses (Last 30 Days)
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -414,7 +418,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
                 <PieIcon className="w-4 h-4 mr-2 text-slate-400" /> 
-                Expenses by Tag
+                Expenses by Tag (Last 30 Days)
             </h3>
             <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -440,18 +444,141 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Receivables Forecast Widget */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-emerald-50/30">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                          <HandCoins className="w-5 h-5" />
+                      </div>
+                      <div>
+                          <h3 className="font-bold text-slate-800">Upcoming Income</h3>
+                          <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
+                      </div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</div>
+                      <div className="text-xs text-slate-500 font-medium">Total Expected</div>
+                  </div>
+              </div>
+              
+              <div className="p-5">
+                  {receivableForecast.length > 0 ? (
+                      <div className="space-y-3">
+                          {receivableForecast.slice(0, 3).map(rec => (
+                              <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                  <div className="flex items-center gap-3">
+                                      <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(rec.expectedDate), 'MMM')}</span>
+                                          <span className="text-sm font-bold text-slate-700">{format(parseISO(rec.expectedDate), 'dd')}</span>
+                                      </div>
+                                      <div>
+                                          <div className="font-semibold text-sm text-slate-800">{rec.name}</div>
+                                          <div className="text-xs text-slate-500 truncate max-w-[150px]">{rec.description || 'No description'}</div>
+                                      </div>
+                                  </div>
+                                  <div className="font-bold text-emerald-600 text-sm">+{formatCurrency(rec.amount)}</div>
+                              </div>
+                          ))}
+                          
+                          {receivableForecast.length > 3 && (
+                              <button 
+                                  onClick={() => setShowReceivableModal(true)}
+                                  className="w-full py-2 mt-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center justify-center"
+                              >
+                                  Read More ({receivableForecast.length - 3} more)
+                              </button>
+                          )}
+                          
+                          {receivableForecast.length <= 3 && receivableForecast.length > 0 && (
+                              <button 
+                                onClick={() => setShowReceivableModal(true)}
+                                className="w-full text-xs text-slate-400 hover:text-emerald-600 mt-1 flex items-center justify-center gap-1"
+                              >
+                                View All Details <ChevronRight className="w-3 h-3" />
+                              </button>
+                          )}
+                      </div>
+                  ) : (
+                      <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                          No expected income in the next 3 months.
+                      </div>
+                  )}
+              </div>
+          </div>
+
+          {/* Liabilities Forecast Widget */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-amber-50/30">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                          <ScrollText className="w-5 h-5" />
+                      </div>
+                      <div>
+                          <h3 className="font-bold text-slate-800">Upcoming Liabilities</h3>
+                          <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
+                      </div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</div>
+                      <div className="text-xs text-slate-500 font-medium">Total Pending</div>
+                  </div>
+              </div>
+              
+              <div className="p-5">
+                  {liabilityForecast.length > 0 ? (
+                      <div className="space-y-3">
+                          {liabilityForecast.slice(0, 3).map(liab => (
+                              <div key={liab.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                  <div className="flex items-center gap-3">
+                                      <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(liab.dueDate), 'MMM')}</span>
+                                          <span className="text-sm font-bold text-slate-700">{format(parseISO(liab.dueDate), 'dd')}</span>
+                                      </div>
+                                      <div>
+                                          <div className="font-semibold text-sm text-slate-800">{liab.name}</div>
+                                          <div className="text-xs text-slate-500 truncate max-w-[150px]">{liab.description || 'No description'}</div>
+                                      </div>
+                                  </div>
+                                  <div className="font-bold text-rose-600 text-sm">-{formatCurrency(liab.amount)}</div>
+                              </div>
+                          ))}
+                          
+                          {liabilityForecast.length > 3 && (
+                              <button 
+                                  onClick={() => setShowLiabilityModal(true)}
+                                  className="w-full py-2 mt-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center"
+                              >
+                                  Read More ({liabilityForecast.length - 3} more)
+                              </button>
+                          )}
+                          
+                          {liabilityForecast.length <= 3 && liabilityForecast.length > 0 && (
+                              <button 
+                                onClick={() => setShowLiabilityModal(true)}
+                                className="w-full text-xs text-slate-400 hover:text-blue-600 mt-1 flex items-center justify-center gap-1"
+                              >
+                                View All Details <ChevronRight className="w-3 h-3" />
+                              </button>
+                          )}
+                      </div>
+                  ) : (
+                      <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                          No liabilities due in the next 3 months.
+                      </div>
+                  )}
+              </div>
+          </div>
+      </div>
+
        {/* Detailed Expense List by Date */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
              <div className="flex items-center gap-2">
                  <Calendar className="w-5 h-5 text-slate-500" />
-                 <h3 className="text-lg font-bold text-slate-800">Expenses by Date</h3>
+                 <h3 className="text-lg font-bold text-slate-800">Expenses by Date (Last 30 Days)</h3>
              </div>
-             {tagFilter !== 'ALL' && (
-                 <span className="text-[10px] sm:text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg whitespace-nowrap">
-                     Filter: {tagFilter}
-                 </span>
-             )}
           </div>
           
           <div className="divide-y divide-slate-100">
@@ -496,7 +623,7 @@ const Dashboard: React.FC = () => {
                  ))
              ) : (
                  <div className="p-12 text-center text-slate-400 text-sm">
-                     No expenses found for this period or filter.
+                     No expenses found for the last 30 days.
                  </div>
              )}
           </div>
@@ -537,6 +664,114 @@ const Dashboard: React.FC = () => {
             )}
            </div>
         </div>
+
+      {/* Liabilities Details Modal */}
+      {showLiabilityModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[85vh]">
+                  <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                      <div>
+                          <h3 className="text-xl font-bold text-slate-800">Liabilities Forecast</h3>
+                          <p className="text-sm text-slate-500">Upcoming payments for the next 3 months.</p>
+                      </div>
+                      <button onClick={() => setShowLiabilityModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                      {liabilityForecast.map(liab => {
+                           const account = accounts.find(a => a.id === liab.paymentAccountId);
+                           return (
+                              <div key={liab.id} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                  <div className="flex justify-between items-start mb-2">
+                                      <div className="flex items-center gap-3">
+                                          <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(liab.dueDate), 'MMM')}</span>
+                                              <span className="text-lg font-bold text-slate-700">{format(parseISO(liab.dueDate), 'dd')}</span>
+                                          </div>
+                                          <div>
+                                              <div className="font-bold text-slate-800">{liab.name}</div>
+                                              <div className="text-sm text-slate-500">{liab.description || 'No description'}</div>
+                                          </div>
+                                      </div>
+                                      <div className="text-right">
+                                          <div className="text-lg font-bold text-rose-600">-{formatCurrency(liab.amount)}</div>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 mt-2">
+                                      <span className="text-slate-500">Payment Source:</span>
+                                      <span className="font-semibold text-slate-700 flex items-center gap-1">
+                                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: account?.color || '#ccc'}} />
+                                          {account?.name || 'Unknown Account'}
+                                      </span>
+                                  </div>
+                              </div>
+                           );
+                      })}
+                  </div>
+                  
+                  <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
+                      <span className="font-medium text-slate-500">Total Forecast</span>
+                      <span className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</span>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Receivables Details Modal */}
+      {showReceivableModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[85vh]">
+                  <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                      <div>
+                          <h3 className="text-xl font-bold text-slate-800">Income Forecast</h3>
+                          <p className="text-sm text-slate-500">Upcoming expected income for the next 3 months.</p>
+                      </div>
+                      <button onClick={() => setShowReceivableModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                      {receivableForecast.map(rec => {
+                           const account = accounts.find(a => a.id === rec.targetAccountId);
+                           return (
+                              <div key={rec.id} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                  <div className="flex justify-between items-start mb-2">
+                                      <div className="flex items-center gap-3">
+                                          <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(rec.expectedDate), 'MMM')}</span>
+                                              <span className="text-lg font-bold text-slate-700">{format(parseISO(rec.expectedDate), 'dd')}</span>
+                                          </div>
+                                          <div>
+                                              <div className="font-bold text-slate-800">{rec.name}</div>
+                                              <div className="text-sm text-slate-500">{rec.description || 'No description'}</div>
+                                          </div>
+                                      </div>
+                                      <div className="text-right">
+                                          <div className="text-lg font-bold text-emerald-600">+{formatCurrency(rec.amount)}</div>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 mt-2">
+                                      <span className="text-slate-500">Target Account:</span>
+                                      <span className="font-semibold text-slate-700 flex items-center gap-1">
+                                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: account?.color || '#ccc'}} />
+                                          {account?.name || 'Unknown Account'}
+                                      </span>
+                                  </div>
+                              </div>
+                           );
+                      })}
+                  </div>
+                  
+                  <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
+                      <span className="font-medium text-slate-500">Total Forecast</span>
+                      <span className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</span>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

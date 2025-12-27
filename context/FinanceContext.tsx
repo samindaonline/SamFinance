@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Account, Transaction, FinanceContextType } from '../types';
+import { Account, Transaction, Liability, Receivable, FinanceContextType } from '../types';
 import { storage } from '../utils/storage';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, CURRENCIES } from '../constants';
 
@@ -9,6 +9,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [liabilities, setLiabilities] = useState<Liability[]>([]);
+  const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [currency, setCurrencyState] = useState<string>('LKR');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
@@ -27,9 +29,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const loadedCategories = storage.categories.load(DEFAULT_CATEGORIES);
     const loadedCurrency = storage.currency.load('LKR');
     
+    // Migration: Handle legacy liabilities (title -> name, add description)
+    const rawLiabilities = storage.liabilities.load([]);
+    const loadedLiabilities = rawLiabilities.map((l: any) => ({
+        ...l,
+        name: l.name || l.title || 'Untitled Liability',
+        description: l.description || '',
+    }));
+
+    const loadedReceivables = storage.receivables.load([]);
+    
     setAccounts(loadedAccounts);
     setTransactions(loadedTransactions);
     setCategories(loadedCategories);
+    setLiabilities(loadedLiabilities);
+    setReceivables(loadedReceivables);
     setCurrencyState(loadedCurrency);
     setIsLoaded(true);
   }, []);
@@ -41,8 +55,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       storage.transactions.save(transactions);
       storage.categories.save(categories);
       storage.currency.save(currency);
+      storage.liabilities.save(liabilities);
+      storage.receivables.save(receivables);
     }
-  }, [accounts, transactions, categories, currency, isLoaded]);
+  }, [accounts, transactions, categories, currency, liabilities, receivables, isLoaded]);
 
   const addAccount = (account: Omit<Account, 'id'>) => {
     const newAccount: Account = {
@@ -86,6 +102,40 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCategories(prev => prev.filter(c => c !== category));
   };
 
+  const addLiability = (liability: Omit<Liability, 'id' | 'status'>) => {
+    const newLiability: Liability = {
+      ...liability,
+      id: crypto.randomUUID(),
+      status: 'PENDING'
+    };
+    setLiabilities(prev => [...prev, newLiability]);
+  };
+
+  const toggleLiabilityStatus = (id: string) => {
+    setLiabilities(prev => prev.map(l => l.id === id ? { ...l, status: l.status === 'PENDING' ? 'PAID' : 'PENDING' } : l));
+  };
+
+  const deleteLiability = (id: string) => {
+    setLiabilities(prev => prev.filter(l => l.id !== id));
+  };
+
+  const addReceivable = (receivable: Omit<Receivable, 'id' | 'status'>) => {
+    const newReceivable: Receivable = {
+      ...receivable,
+      id: crypto.randomUUID(),
+      status: 'PENDING'
+    };
+    setReceivables(prev => [...prev, newReceivable]);
+  };
+
+  const toggleReceivableStatus = (id: string) => {
+    setReceivables(prev => prev.map(r => r.id === id ? { ...r, status: r.status === 'PENDING' ? 'RECEIVED' : 'PENDING' } : r));
+  };
+
+  const deleteReceivable = (id: string) => {
+    setReceivables(prev => prev.filter(r => r.id !== id));
+  };
+
   const setCurrency = (c: string) => {
     setCurrencyState(c);
   };
@@ -95,6 +145,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAccounts(DEFAULT_ACCOUNTS);
     setTransactions([]);
     setCategories(DEFAULT_CATEGORIES);
+    setLiabilities([]);
+    setReceivables([]);
     // We preserve the currency setting as that's a preference
   };
 
@@ -112,6 +164,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setTransactions(data.transactions);
         if (Array.isArray(data.categories)) {
             setCategories(data.categories);
+        }
+        if (Array.isArray(data.liabilities)) {
+            // Handle migration for imported liabilities as well if they are from an older version
+            const importedLiabilities = data.liabilities.map((l: any) => ({
+                ...l,
+                name: l.name || l.title || 'Untitled Liability',
+                description: l.description || ''
+            }));
+            setLiabilities(importedLiabilities);
+        }
+        if (Array.isArray(data.receivables)) {
+            setReceivables(data.receivables);
         }
         if (data.currency && typeof data.currency === 'string') {
             setCurrencyState(data.currency);
@@ -175,6 +239,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     accounts,
     transactions,
     categories,
+    liabilities,
+    receivables,
     addAccount,
     updateAccount,
     deleteAccount,
@@ -182,6 +248,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     deleteTransaction,
     addCategory,
     removeCategory,
+    addLiability,
+    toggleLiabilityStatus,
+    deleteLiability,
+    addReceivable,
+    toggleReceivableStatus,
+    deleteReceivable,
     getAccountBalance,
     totalNetWorth,
     isTransactionModalOpen,
