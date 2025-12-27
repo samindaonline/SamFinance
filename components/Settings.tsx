@@ -1,20 +1,12 @@
 import React, { useRef } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { CURRENCIES } from '../constants';
-import { Coins, Check, Trash2, AlertTriangle, Download, Upload, FileJson } from 'lucide-react';
+import { Coins, Check, Download, Upload, FileJson } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Settings: React.FC = () => {
-  const { currency, setCurrency, resetData, accounts, transactions, categories, liabilities, receivables, importData } = useFinance();
+  const { currency, setCurrency, accounts, transactions, categories, liabilities, receivables, importData } = useFinance();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleReset = () => {
-    if (window.confirm("WARNING: This will delete ALL transactions, liabilities, receivables, and accounts (resetting to defaults). This action cannot be undone. Are you sure?")) {
-        resetData();
-        // Optional: Provide feedback
-        // alert("Data has been reset.");
-    }
-  };
 
   const handleExport = () => {
     const data = {
@@ -53,11 +45,10 @@ const Settings: React.FC = () => {
           if (content) {
               if (window.confirm("This will overwrite your current data with the data from the file. Are you sure you want to proceed?")) {
                   const success = importData(content);
-                  if (success) {
-                      alert("Data imported successfully!");
-                  } else {
+                  if (!success) {
                       alert("Failed to import data. Please check the file format.");
                   }
+                  // If success, page reloads automatically
               }
           }
       };
@@ -148,31 +139,6 @@ const Settings: React.FC = () => {
             </div>
              <p className="mt-3 text-xs text-slate-400 text-center sm:text-left">
                 Importing will overwrite your current data. Please ensure you export your current data first if you wish to keep it.
-            </p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-rose-100 bg-rose-50/50">
-             <div className="flex items-center gap-3 mb-2">
-                 <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
-                     <AlertTriangle className="w-5 h-5" />
-                 </div>
-                 <h3 className="text-lg font-bold text-rose-800">Danger Zone</h3>
-             </div>
-             <p className="text-slate-500 text-sm">Manage your application data. Actions here are irreversible.</p>
-        </div>
-        
-        <div className="p-6">
-            <button 
-                onClick={handleReset}
-                className="w-full sm:w-auto flex items-center justify-center px-4 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all font-medium"
-            >
-                <Trash2 className="w-5 h-5 mr-3" />
-                Reset Data
-            </button>
-            <p className="mt-2 text-xs text-slate-400">
-                This will delete all transactions, liabilities, receivables, and accounts (resetting to defaults), but will preserve the default "Main Bank Account" and "Wallet".
             </p>
         </div>
       </div>

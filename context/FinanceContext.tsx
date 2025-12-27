@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Account, Transaction, Liability, Receivable, FinanceContextType } from '../types';
 import { storage } from '../utils/storage';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, CURRENCIES } from '../constants';
@@ -15,11 +15,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   
+  // Guard to prevent auto-save from overwriting reset/import actions during reload
+  const isResetting = useRef(false);
+
   // Load initial data
   useEffect(() => {
     const loadedAccounts = storage.accounts.load(DEFAULT_ACCOUNTS);
     
-    // Migration: Handle legacy transactions that might have 'category' instead of 'tags'
+    // Migration: Handle legacy transactions
     const rawTransactions = storage.transactions.load([]);
     const loadedTransactions = rawTransactions.map((t: any) => ({
         ...t,
@@ -48,9 +51,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoaded(true);
   }, []);
 
-  // Save changes
+  // Save changes - Only runs if NOT resetting
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && !isResetting.current) {
       storage.accounts.save(accounts);
       storage.transactions.save(transactions);
       storage.categories.save(categories);
@@ -140,27 +143,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCurrencyState(c);
   };
 
-  const resetData = useCallback(() => {
-    // Deep copy defaults to ensure clean state
-    const defaultAccounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
-    const defaultCategories = [...DEFAULT_CATEGORIES];
-
-    // Update State - this will trigger the useEffect to save to localStorage
-    setAccounts(defaultAccounts);
-    setTransactions([]);
-    setCategories(defaultCategories);
-    setLiabilities([]);
-    setReceivables([]);
-    
-    // Explicitly save to storage as well to ensure persistence immediately
-    // This is redundant with useEffect but adds a layer of safety against race conditions during rapid state changes
-    storage.accounts.save(defaultAccounts);
-    storage.transactions.save([]);
-    storage.categories.save(defaultCategories);
-    storage.liabilities.save([]);
-    storage.receivables.save([]);
-  }, []);
-
   const importData = useCallback((jsonString: string): boolean => {
     try {
         const data = JSON.parse(jsonString);
@@ -171,33 +153,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             return false;
         }
 
-        const newCategories = Array.isArray(data.categories) ? data.categories : DEFAULT_CATEGORIES;
-        const newLiabilities = Array.isArray(data.liabilities) ? data.liabilities.map((l: any) => ({
-            ...l,
-            name: l.name || l.title || 'Untitled Liability',
-            description: l.description || ''
-        })) : [];
-        const newReceivables = Array.isArray(data.receivables) ? data.receivables : [];
+        // 1. Lock the auto-save mechanism
+        isResetting.current = true;
 
-        // Update State
-        setAccounts(data.accounts);
-        setTransactions(data.transactions);
-        setCategories(newCategories);
-        setLiabilities(newLiabilities);
-        setReceivables(newReceivables);
-        
-        if (data.currency) {
-            setCurrencyState(data.currency);
-        }
-
-        // Explicit save
+        // 2. Direct write to storage
         storage.accounts.save(data.accounts);
         storage.transactions.save(data.transactions);
-        storage.categories.save(newCategories);
-        storage.liabilities.save(newLiabilities);
-        storage.receivables.save(newReceivables);
-        if (data.currency) storage.currency.save(data.currency);
+        storage.categories.save(data.categories || DEFAULT_CATEGORIES);
+        storage.liabilities.save(data.liabilities || []);
+        storage.receivables.save(data.receivables || []);
+        
+        if (data.currency) {
+            storage.currency.save(data.currency);
+        }
 
+        // 3. Reload
+        alert("Data imported successfully. The application will now reload.");
+        window.location.reload();
         return true;
     } catch (error) {
         console.error("Failed to parse import data", error);
@@ -278,7 +250,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     currency,
     setCurrency,
     formatCurrency,
-    resetData,
     importData
   };
 

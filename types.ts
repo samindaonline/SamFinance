@@ -69,6 +69,5 @@ export interface FinanceContextType {
   currency: string;
   setCurrency: (currency: string) => void;
   formatCurrency: (amount: number) => string;
-  resetData: () => void;
   importData: (jsonString: string) => boolean;
 }
