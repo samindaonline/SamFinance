@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
-import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DatePicker from './DatePicker';
@@ -76,7 +76,7 @@ const Budget: React.FC = () => {
 
   useEffect(() => {
       if(isCreateModalOpen) setCreateModalVisible(true);
-      else setTimeout(() => setCreateModalVisible(false), 200);
+      else setTimeout(() => setCreateModalVisible(false), 300);
   }, [isCreateModalOpen]);
 
   // Editor State
@@ -477,28 +477,42 @@ const Budget: React.FC = () => {
                     )}
                </div>
 
-               {/* Create Modal */}
+               {/* Create Modal - Refactored */}
                {(isCreateModalVisible || isCreateModalOpen) && createPortal(
-                   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isCreateModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setCreateModalOpen(false)} />
-                        <div className={`bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl z-10 relative ${isCreateModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
-                           <h3 className="text-lg font-bold text-slate-800 mb-4">{t('new_forecast')}</h3>
-                           <form onSubmit={handleCreateProject}>
-                               <label className="block text-sm font-medium text-slate-700 mb-1">{t('proj_name')}</label>
-                               <input 
-                                    autoFocus
-                                    type="text" 
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-6"
-                                    placeholder="e.g. New Gaming PC"
-                                    value={newProjectName}
-                                    onChange={e => setNewProjectName(e.target.value)}
-                                    required
-                               />
-                               <div className="flex justify-end gap-3">
-                                   <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">{t('cancel')}</button>
-                                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">{t('create')}</button>
-                               </div>
-                           </form>
+                   <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 transition-all duration-200">
+                        <div 
+                            className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${isCreateModalOpen ? 'opacity-100' : 'opacity-0'}`} 
+                            onClick={() => setCreateModalOpen(false)} 
+                        />
+                        
+                        <div className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-sm shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh] z-10 relative transform transition-all duration-300 ease-out ${isCreateModalOpen ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 opacity-0'}`}>
+                           {/* Fixed Header */}
+                           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+                               <h3 className="text-lg font-bold text-slate-800">{t('new_forecast')}</h3>
+                               <button onClick={() => setCreateModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                                   <X className="w-5 h-5" />
+                               </button>
+                           </div>
+                           
+                           {/* Scrollable Body */}
+                           <div className="p-6 overflow-y-auto">
+                               <form onSubmit={handleCreateProject}>
+                                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('proj_name')}</label>
+                                   <input 
+                                        autoFocus
+                                        type="text" 
+                                        className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-6"
+                                        placeholder="e.g. New Gaming PC"
+                                        value={newProjectName}
+                                        onChange={e => setNewProjectName(e.target.value)}
+                                        required
+                                   />
+                                   <div className="flex justify-end gap-3 pb-safe">
+                                       <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">{t('cancel')}</button>
+                                       <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">{t('create')}</button>
+                                   </div>
+                               </form>
+                           </div>
                        </div>
                    </div>,
                    document.body
@@ -507,10 +521,10 @@ const Budget: React.FC = () => {
       );
   }
 
-  // --- Detail View ---
+  // --- Detail View (Unchanged) ---
   return (
       <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col animate-slide-up">
-          {/* Header */}
+          {/* ... Detail view content ... */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
               <div className="flex items-center gap-3">
                   <button onClick={handleBackToList} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 active:scale-90 duration-200">
@@ -686,6 +700,7 @@ const Budget: React.FC = () => {
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        {/* ... Chart Content ... */}
                                         <defs>
                                             {Object.keys(projectionData || {}).map(accId => {
                                                 const acc = accounts.find(a => a.id === accId);
@@ -896,8 +911,7 @@ const Budget: React.FC = () => {
   );
 };
 
-// --- Helper: Payment Builder Component ---
-
+// ... PaymentBuilder Component (Unchanged) ...
 const PaymentBuilder: React.FC<{ 
     totalPrice: number; 
     existingInstallments: BudgetInstallment[]; 

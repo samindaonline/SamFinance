@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { TransactionType, Account } from '../types';
@@ -225,7 +226,7 @@ const TransactionModal: React.FC = () => {
       }
     } else {
         // Delay hiding until animation completes
-        const timer = setTimeout(() => setIsVisible(false), 200); 
+        const timer = setTimeout(() => setIsVisible(false), 300); 
         return () => clearTimeout(timer);
     }
   }, [isTransactionModalOpen, accounts]);
@@ -270,16 +271,18 @@ const TransactionModal: React.FC = () => {
           setNewTagInput('');
       }
   }
-
-  const backdropClass = isTransactionModalOpen ? 'animate-fade-in' : 'animate-fade-out';
-  const modalClass = isTransactionModalOpen ? 'animate-zoom-in' : 'animate-zoom-out';
-
-  return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6`}>
-      <div className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm ${backdropClass}`} onClick={() => setTransactionModalOpen(false)} />
-      <div className={`bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] z-10 relative ${modalClass}`}>
+  
+  return createPortal(
+    <div className={`fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 transition-all duration-200`}>
+      <div 
+        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${isTransactionModalOpen ? 'opacity-100' : 'opacity-0'}`} 
+        onClick={() => setTransactionModalOpen(false)} 
+      />
+      
+      {/* Modal Container */}
+      <div className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh] z-10 relative transform transition-all duration-300 ease-out ${isTransactionModalOpen ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 opacity-0'}`}>
         
-        {/* Header */}
+        {/* Fixed Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
             <h3 className="text-xl font-bold text-slate-800">{t('record_tx')}</h3>
             <button 
@@ -291,7 +294,7 @@ const TransactionModal: React.FC = () => {
         </div>
         
         {/* Scrollable Form Body */}
-        <div className="overflow-y-auto custom-scrollbar p-6 flex-1">
+        <div className="overflow-y-auto custom-scrollbar p-5 md:p-6 flex-1">
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Type Selector */}
                 <div className="flex bg-slate-100 p-1.5 rounded-xl">
@@ -425,7 +428,8 @@ const TransactionModal: React.FC = () => {
             </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

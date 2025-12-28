@@ -45,12 +45,15 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
              >
                 <Menu className="w-6 h-6" />
              </button>
-             <div className="flex items-center gap-2 group cursor-default">
+             <button 
+                onClick={() => setView('dashboard')}
+                className="flex items-center gap-2 group cursor-pointer outline-none focus:opacity-80 active:scale-95 transition-transform duration-200"
+             >
                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-110 duration-300">
                     <PiggyBank className="w-5 h-5" />
                  </div>
-                 <h1 className="text-lg font-bold text-slate-800 tracking-tight hidden sm:block">SamFinance</h1>
-             </div>
+                 <h1 className="text-lg font-bold text-slate-800 tracking-tight">SamFinance</h1>
+             </button>
          </div>
 
          <div className="flex items-center gap-3">

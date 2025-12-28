@@ -345,469 +345,256 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Net Worth Trend Chart */}
-      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '250ms' }}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-2 text-slate-400" /> 
-                {t('net_worth_trend')}
-            </h3>
-            <div className="flex bg-slate-100 rounded-lg p-1">
-                {(['3M', '6M', '1Y'] as const).map(range => (
-                    <button
+      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{ animationDelay: '250ms' }}>
+         <div className="flex justify-between items-center mb-6">
+             <h3 className="text-lg font-bold text-slate-800 flex items-center">
+                 <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+                 {t('net_worth_trend')}
+             </h3>
+             <div className="flex bg-slate-100 p-1 rounded-lg">
+                 {(['3M', '6M', '1Y'] as const).map(range => (
+                     <button
                         key={range}
                         onClick={() => setNetWorthRange(range)}
-                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
-                            netWorthRange === range 
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                        {range}
-                    </button>
-                ))}
-            </div>
-          </div>
-          <div className="h-64">
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${netWorthRange === range ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                     >
+                         {range}
+                     </button>
+                 ))}
+             </div>
+         </div>
+         <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={netWorthTrendData}>
-                <defs>
-                  <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={30} />
-                <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fill: '#64748b'}} 
-                    width={45} 
-                    tickFormatter={(value) => {
-                        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                        if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
-                        return value;
-                    }}
-                />
-                <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  labelStyle={{color: '#64748b', marginBottom: '0.5rem', fontSize: '12px'}}
-                />
-                <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    name="Net Worth"
-                    stroke="#3b82f6" 
-                    strokeWidth={2} 
-                    fillOpacity={1} 
-                    fill="url(#colorNetWorth)" 
-                    animationDuration={1500}
-                />
-              </AreaChart>
+                <AreaChart data={netWorthTrendData}>
+                    <defs>
+                        <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 12, fill: '#64748b'}} 
+                        interval="preserveStartEnd"
+                    />
+                    <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 12, fill: '#64748b'}}
+                        tickFormatter={(value) => {
+                             if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+                             return value;
+                        }}
+                    />
+                    <Tooltip 
+                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                        formatter={(value: number) => [formatCurrency(value), t('net_worth')]}
+                    />
+                    <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#3b82f6" 
+                        fillOpacity={1} 
+                        fill="url(#colorNetWorth)" 
+                        strokeWidth={3}
+                    />
+                </AreaChart>
             </ResponsiveContainer>
-          </div>
+         </div>
       </div>
 
-      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Activity Chart */}
-        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '300ms' }}>
-          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-            <Activity className="w-4 h-4 mr-2 text-slate-400" /> 
-            {t('activity_chart')}
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={activityData}>
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} interval="preserveStartEnd" />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} width={35} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                />
-                <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" animationDuration={1500} />
-                <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" animationDuration={1500} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Expense by Tag */}
-        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '350ms' }}>
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                <PieIcon className="w-4 h-4 mr-2 text-slate-400" /> 
-                {t('expense_tags')}
-            </h3>
-            <div className="h-64">
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{ animationDelay: '300ms' }}>
+             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                 <Activity className="w-5 h-5 mr-2 text-slate-500" />
+                 {t('activity_chart')}
+             </h3>
+             <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={categoryData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            animationDuration={1500}
-                        >
-                            {categoryData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS_PALETTE[index % COLORS_PALETTE.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" wrapperStyle={{fontSize: '11px'}}/>
-                    </PieChart>
+                    <BarChart data={activityData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                            dataKey="date" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fontSize: 10, fill: '#64748b'}}
+                            interval={6}
+                        />
+                         <YAxis 
+                            hide
+                        />
+                        <Tooltip 
+                            cursor={{fill: '#f8fafc'}}
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                        />
+                        <Legend />
+                        <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                    </BarChart>
                 </ResponsiveContainer>
-            </div>
+             </div>
+        </div>
+        
+        {/* Asset Allocation */}
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{ animationDelay: '350ms' }}>
+             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                 <Wallet className="w-5 h-5 mr-2 text-slate-500" />
+                 {t('asset_dist')}
+             </h3>
+             <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={assetData} layout="vertical" margin={{ left: 0, right: 0, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                        <XAxis type="number" hide />
+                        <YAxis type="category" dataKey="name" width={100} tick={{fontSize: 12, fill: '#475569', fontWeight: 600}} axisLine={false} tickLine={false} />
+                        <Tooltip 
+                            cursor={{fill: 'transparent'}}
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                            formatter={(value: number) => formatCurrency(value)}
+                        />
+                        <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={32}>
+                             {assetData.map((entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={stringToColor(entry.name)} />
+                             ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+             </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Receivables Forecast Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '400ms' }}>
-              <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-emerald-50/30">
-                  <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                          <HandCoins className="w-5 h-5" />
-                      </div>
-                      <div>
-                          <h3 className="font-bold text-slate-800">{t('upcoming_income')}</h3>
-                          <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
-                      </div>
-                  </div>
-                  <div className="text-right">
-                      <div className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</div>
-                      <div className="text-xs text-slate-500 font-medium">{t('total_expected')}</div>
-                  </div>
-              </div>
-              
-              <div className="p-5">
-                  {receivableForecast.length > 0 ? (
-                      <div className="space-y-3">
-                          {receivableForecast.slice(0, 3).map((rec, idx) => (
-                              <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 animate-slide-in-right" style={{ animationDelay: `${idx * 100}ms` }}>
-                                  <div className="flex items-center gap-3">
-                                      <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(rec.expectedDate), 'MMM')}</span>
-                                          <span className="text-sm font-bold text-slate-700">{format(parseDate(rec.expectedDate), 'dd')}</span>
-                                      </div>
-                                      <div>
-                                          <div className="font-semibold text-sm text-slate-800">{rec.name}</div>
-                                          <div className="text-xs text-slate-500 truncate max-w-[150px]">{rec.description || 'No description'}</div>
-                                      </div>
-                                  </div>
-                                  <div className="font-bold text-emerald-600 text-sm">+{formatCurrency(rec.amount)}</div>
-                              </div>
-                          ))}
-                          
-                          {receivableForecast.length > 3 && (
-                              <button 
-                                  onClick={() => setShowReceivableModal(true)}
-                                  className="w-full py-2 mt-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
-                              >
-                                  {t('read_more')} ({receivableForecast.length - 3} more)
-                              </button>
-                          )}
-                          
-                          {receivableForecast.length <= 3 && receivableForecast.length > 0 && (
-                              <button 
-                                onClick={() => setShowReceivableModal(true)}
-                                className="w-full text-xs text-slate-400 hover:text-emerald-600 mt-1 flex items-center justify-center gap-1 transition-colors"
-                              >
-                                {t('view_details')} <ChevronRight className="w-3 h-3" />
-                              </button>
-                          )}
-                      </div>
-                  ) : (
-                      <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                          {t('no_data')}
-                      </div>
-                  )}
-              </div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           {/* Categories Pie */}
+           <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up lg:col-span-1" style={{ animationDelay: '400ms' }}>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                    <PieIcon className="w-5 h-5 mr-2 text-slate-500" />
+                    {t('expense_tags')}
+                </h3>
+                <div className="h-64 w-full flex items-center justify-center">
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={categoryData}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {categoryData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={stringToColor(entry.name)} />
+                                    ))}
+                                </Pie>
+                                <Tooltip 
+                                    formatter={(value: number) => formatCurrency(value)}
+                                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                />
+                                <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="text-center text-slate-400 text-sm">No expense data</div>
+                    )}
+                </div>
+           </div>
 
-          {/* Liabilities Forecast Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '450ms' }}>
-              <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-amber-50/30">
-                  <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                          <ScrollText className="w-5 h-5" />
-                      </div>
-                      <div>
-                          <h3 className="font-bold text-slate-800">{t('upcoming_liabilities')}</h3>
-                          <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
-                      </div>
-                  </div>
-                  <div className="text-right">
-                      <div className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</div>
-                      <div className="text-xs text-slate-500 font-medium">{t('total_pending')}</div>
-                  </div>
-              </div>
-              
-              <div className="p-5">
-                  {liabilityForecast.length > 0 ? (
-                      <div className="space-y-3">
-                          {liabilityForecast.slice(0, 3).map((liab, idx) => (
-                              <div key={liab.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 animate-slide-in-right" style={{ animationDelay: `${idx * 100}ms` }}>
-                                  <div className="flex items-center gap-3">
-                                      <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(liab.dueDate), 'MMM')}</span>
-                                          <span className="text-sm font-bold text-slate-700">{format(parseDate(liab.dueDate), 'dd')}</span>
-                                      </div>
-                                      <div>
-                                          <div className="font-semibold text-sm text-slate-800">{liab.name}</div>
-                                          <div className="text-xs text-slate-500 truncate max-w-[150px]">{liab.description || 'No description'}</div>
-                                      </div>
-                                  </div>
-                                  <div className="font-bold text-rose-600 text-sm">-{formatCurrency(liab.amount)}</div>
-                              </div>
-                          ))}
-                          
-                          {liabilityForecast.length > 3 && (
-                              <button 
-                                  onClick={() => setShowLiabilityModal(true)}
-                                  className="w-full py-2 mt-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
-                              >
-                                  {t('read_more')} ({liabilityForecast.length - 3} more)
-                              </button>
-                          )}
-                          
-                          {liabilityForecast.length <= 3 && liabilityForecast.length > 0 && (
-                              <button 
-                                onClick={() => setShowLiabilityModal(true)}
-                                className="w-full text-xs text-slate-400 hover:text-blue-600 mt-1 flex items-center justify-center gap-1 transition-colors"
-                              >
-                                {t('view_details')} <ChevronRight className="w-3 h-3" />
-                              </button>
-                          )}
-                      </div>
-                  ) : (
-                      <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                          {t('no_data')}
-                      </div>
-                  )}
-              </div>
-          </div>
+           {/* Forecasts */}
+           <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up lg:col-span-2 flex flex-col md:flex-row gap-6" style={{ animationDelay: '450ms' }}>
+                <div className="flex-1">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wider">{t('upcoming_income')}</h4>
+                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">{t('total_expected')}: {formatCurrency(totalForecastReceivable)}</span>
+                    </div>
+                    <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                         {receivableForecast.length > 0 ? (
+                             receivableForecast.map(r => (
+                                 <div key={r.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                     <div>
+                                         <div className="font-bold text-slate-700 text-sm">{r.name}</div>
+                                         <div className="text-xs text-slate-500">{format(parseDate(r.expectedDate), 'MMM dd')}</div>
+                                     </div>
+                                     <div className="font-bold text-emerald-600">+{formatCurrency(r.amount)}</div>
+                                 </div>
+                             ))
+                         ) : (
+                             <div className="text-center py-8 text-slate-400 text-sm border border-dashed border-slate-200 rounded-xl">No upcoming income</div>
+                         )}
+                    </div>
+                </div>
+
+                <div className="w-px bg-slate-100 hidden md:block" />
+
+                <div className="flex-1">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wider">{t('upcoming_liabilities')}</h4>
+                        <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-bold">{t('total_pending')}: {formatCurrency(totalForecastLiability)}</span>
+                    </div>
+                    <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                         {liabilityForecast.length > 0 ? (
+                             liabilityForecast.map(l => (
+                                 <div key={l.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                     <div>
+                                         <div className="font-bold text-slate-700 text-sm">{l.name}</div>
+                                         <div className="text-xs text-slate-500">{format(parseDate(l.dueDate), 'MMM dd')}</div>
+                                     </div>
+                                     <div className="font-bold text-rose-600">-{formatCurrency(l.amount)}</div>
+                                 </div>
+                             ))
+                         ) : (
+                             <div className="text-center py-8 text-slate-400 text-sm border border-dashed border-slate-200 rounded-xl">No pending liabilities</div>
+                         )}
+                    </div>
+                </div>
+           </div>
       </div>
-
-       {/* Detailed Expense List by Date */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-slide-up" style={{ animationDelay: '500ms' }}>
-          <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-             <div className="flex items-center gap-2">
-                 <Calendar className="w-5 h-5 text-slate-500" />
-                 <h3 className="text-lg font-bold text-slate-800">{t('expense_list')}</h3>
-             </div>
-          </div>
-          
-          <div className="divide-y divide-slate-100">
-             {groupedExpenses.length > 0 ? (
-                 groupedExpenses.map(([date, group]) => (
-                     <div key={date} className="group">
-                         {/* Date Header */}
-                         <div className="bg-slate-50 px-4 md:px-6 py-2 md:py-3 flex justify-between items-center">
-                             <span className="font-semibold text-slate-700 text-sm">{format(new Date(date), 'MMM do')}</span>
-                             <span className="font-bold text-rose-600 text-sm">-{formatCurrency(group.total)}</span>
-                         </div>
-                         {/* Transactions for that date */}
-                         <div className="divide-y divide-slate-50">
-                             {group.items.map(t => {
-                                const account = accounts.find(a => a.id === t.accountId);
-                                return (
-                                    <div key={t.id} className="px-4 md:px-6 py-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg shrink-0">
-                                                <ArrowDownRight className="w-4 h-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-medium text-slate-800 truncate">{t.description || "Expense"}</p>
-                                                <div className="flex flex-wrap gap-1 mt-1">
+      
+      {/* Recent Transactions List */}
+       <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{ animationDelay: '500ms' }}>
+           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+               <ScrollText className="w-5 h-5 mr-2 text-slate-500" />
+               {t('expense_list')}
+           </h3>
+           <div className="space-y-6">
+                {groupedExpenses.length > 0 ? (
+                    groupedExpenses.slice(0, 5).map(([date, { total, items }]) => (
+                        <div key={date}>
+                            <div className="flex justify-between items-center mb-2 px-2">
+                                <span className="text-sm font-bold text-slate-500 uppercase">{format(parseDate(date), 'MMMM dd, yyyy')}</span>
+                                <span className="text-sm font-bold text-slate-800">Total: -{formatCurrency(total)}</span>
+                            </div>
+                            <div className="space-y-2">
+                                {items.map(t => (
+                                    <div key={t.id} className="flex justify-between items-center p-3 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-rose-400" />
+                                            <div>
+                                                <div className="font-medium text-slate-700 text-sm">{t.description || t.tags[0] || 'Uncategorized'}</div>
+                                                <div className="flex gap-1 mt-0.5">
                                                     {t.tags.map(tag => (
-                                                        <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200">
-                                                            {tag}
-                                                        </span>
+                                                        <span key={tag} className="text-[10px] bg-white border border-slate-200 px-1.5 rounded text-slate-500">{tag}</span>
                                                     ))}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-right pl-2 shrink-0">
-                                            <span className="text-sm font-bold text-slate-700">{formatCurrency(t.amount)}</span>
-                                            <p className="text-xs text-slate-400 truncate max-w-[80px] sm:max-w-none ml-auto">{account?.name}</p>
+                                        <div className="font-mono text-sm font-bold text-rose-600">
+                                            -{formatCurrency(t.amount)}
                                         </div>
                                     </div>
-                                );
-                             })}
-                         </div>
-                     </div>
-                 ))
-             ) : (
-                 <div className="p-12 text-center text-slate-400 text-sm">
-                     {t('no_data')}
-                 </div>
-             )}
-          </div>
-      </div>
-
-      {/* Account Breakdown */}
-      <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '550ms' }}>
-           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-            <Wallet className="w-4 h-4 mr-2 text-slate-400" />
-            {t('asset_dist')}
-           </h3>
-           <div className="h-64">
-            {assetData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={assetData} margin={{bottom: 20}}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={<CustomXAxisTick />}
-                    height={50}
-                  />
-                  <YAxis hide />
-                  <Tooltip 
-                     cursor={{fill: '#f8fafc'}}
-                     contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  />
-                  {Array.from(new Set(assetData.flatMap((d: any) => Object.keys(d)).filter((k: any) => k !== 'name' && k !== 'total'))).map((key: string, index) => (
-                      <Bar key={key} dataKey={key} stackId="a" fill={stringToColor(key)} radius={[4, 4, 0, 0]} animationDuration={1500} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-slate-400">
-                {t('no_data')}
-              </div>
-            )}
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center py-12 text-slate-400">{t('no_data')}</div>
+                )}
            </div>
-        </div>
-
-      {/* Liabilities Details Modal */}
-      {(isLiabilityModalVisible || showLiabilityModal) && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${showLiabilityModal ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setShowLiabilityModal(false)} />
-              <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showLiabilityModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
-                  <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                      <div>
-                          <h3 className="text-xl font-bold text-slate-800">{t('upcoming_liabilities')}</h3>
-                          <p className="text-sm text-slate-500">Upcoming payments for the next 3 months.</p>
-                      </div>
-                      <button onClick={() => setShowLiabilityModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
-                          <X className="w-5 h-5" />
-                      </button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                      {liabilityForecast.map(liab => {
-                           const account = accounts.find(a => a.id === liab.paymentAccountId);
-                           return (
-                              <div key={liab.id} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                  <div className="flex justify-between items-start mb-2">
-                                      <div className="flex items-center gap-3">
-                                          <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(liab.dueDate), 'MMM')}</span>
-                                              <span className="text-lg font-bold text-slate-700">{format(parseDate(liab.dueDate), 'dd')}</span>
-                                          </div>
-                                          <div>
-                                              <div className="font-bold text-slate-800">{liab.name}</div>
-                                              <div className="text-sm text-slate-500">{liab.description || 'No description'}</div>
-                                          </div>
-                                      </div>
-                                      <div className="text-right">
-                                          <div className="text-lg font-bold text-rose-600">-{formatCurrency(liab.amount)}</div>
-                                      </div>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 mt-2">
-                                      <span className="text-slate-500">Payment Source:</span>
-                                      <span className="font-semibold text-slate-700 flex items-center gap-1">
-                                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: account?.color || '#ccc'}} />
-                                          {account?.name || 'Unknown Account'}
-                                      </span>
-                                  </div>
-                              </div>
-                           );
-                      })}
-                  </div>
-                  
-                  <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
-                      <span className="font-medium text-slate-500">{t('total_expected')}</span>
-                      <span className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</span>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* Receivables Details Modal */}
-      {(isReceivableModalVisible || showReceivableModal) && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${showReceivableModal ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setShowReceivableModal(false)} />
-              <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showReceivableModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
-                  <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                      <div>
-                          <h3 className="text-xl font-bold text-slate-800">{t('upcoming_income')}</h3>
-                          <p className="text-sm text-slate-500">Upcoming expected income for the next 3 months.</p>
-                      </div>
-                      <button onClick={() => setShowReceivableModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
-                          <X className="w-5 h-5" />
-                      </button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                      {receivableForecast.map(rec => {
-                           const account = accounts.find(a => a.id === rec.targetAccountId);
-                           return (
-                              <div key={rec.id} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                  <div className="flex justify-between items-start mb-2">
-                                      <div className="flex items-center gap-3">
-                                          <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase">{format(parseDate(rec.expectedDate), 'MMM')}</span>
-                                              <span className="text-lg font-bold text-slate-700">{format(parseDate(rec.expectedDate), 'dd')}</span>
-                                          </div>
-                                          <div>
-                                              <div className="font-bold text-slate-800">{rec.name}</div>
-                                              <div className="text-sm text-slate-500">{rec.description || 'No description'}</div>
-                                          </div>
-                                      </div>
-                                      <div className="text-right">
-                                          <div className="text-lg font-bold text-emerald-600">+{formatCurrency(rec.amount)}</div>
-                                      </div>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 mt-2">
-                                      <span className="text-slate-500">Target Account:</span>
-                                      <span className="font-semibold text-slate-700 flex items-center gap-1">
-                                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: account?.color || '#ccc'}} />
-                                          {account?.name || 'Unknown Account'}
-                                      </span>
-                                  </div>
-                              </div>
-                           );
-                      })}
-                  </div>
-                  
-                  <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
-                      <span className="font-medium text-slate-500">{t('total_expected')}</span>
-                      <span className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</span>
-                  </div>
-              </div>
-          </div>
-      )}
+       </div>
     </div>
   );
 };
-
-const COLORS_PALETTE = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
 
 export default Dashboard;

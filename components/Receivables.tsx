@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2 } from 'lucide-react';
+import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2, X } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import { Receivable } from '../types';
 import DatePicker from './DatePicker';
@@ -10,8 +11,15 @@ const Receivables: React.FC = () => {
   const { receivables, accounts, addReceivable, updateReceivable, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
   const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // Animation Handling
+  useEffect(() => {
+      if(isAdding) setIsModalVisible(true);
+      else setTimeout(() => setIsModalVisible(false), 300);
+  }, [isAdding]);
+
   // Form State
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -55,9 +63,6 @@ const Receivables: React.FC = () => {
     setTargetAccountId(receivable.targetAccountId);
     setType(receivable.type);
     setIsAdding(true);
-    
-    // Smooth scroll to top to see the form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
@@ -96,116 +101,131 @@ const Receivables: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
         <div>
            <h2 className="text-2xl font-bold text-slate-800">{t('rec_title')}</h2>
            <p className="text-slate-500 text-sm">{t('rec_subtitle')}</p>
         </div>
-        {!isAdding && (
-            <button
+        <button
             onClick={() => setIsAdding(true)}
             className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
-            >
+        >
             <Plus className="w-5 h-5 mr-2" />
             {t('add_rec')}
-            </button>
-        )}
+        </button>
       </div>
 
-      {/* Add/Edit Form */}
-      {isAdding && (
-          <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-lg animate-in fade-in slide-in-from-top-4 duration-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">{editingId ? t('edit_income') : t('add_income')}</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_name')}</label>
-                          <input 
-                            required
-                            type="text" 
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            placeholder="e.g. Salary, Dividend, Loan Repayment"
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                      </div>
-                      <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
-                          <textarea 
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            placeholder="Details about this income..."
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
-                          />
-                      </div>
-                      <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
-                          <input 
-                            required
-                            type="number" 
-                            step="0.01"
-                            value={amount}
-                            onChange={e => setAmount(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                      </div>
-                      <div>
-                          <DatePicker 
-                            label={t('expected_date')}
-                            value={expectedDate}
-                            onChange={setExpectedDate}
-                            required
-                          />
-                      </div>
-                      <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('target_acc')}</label>
-                          <select 
-                            required
-                            value={targetAccountId}
-                            onChange={e => setTargetAccountId(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                          >
-                              <option value="">{t('select_acc')}</option>
-                              {accounts.map(acc => (
-                                  <option key={acc.id} value={acc.id}>{acc.name}</option>
-                              ))}
-                          </select>
-                      </div>
-                      <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_type')}</label>
-                          <select 
-                            required
-                            value={type}
-                            onChange={e => setType(e.target.value as any)}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                          >
-                              <option value="ONE_TIME">{t('one_time')}</option>
-                              <option value="RECURRING">{t('recurring')}</option>
-                          </select>
-                      </div>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-2">
-                      <button 
-                        type="button" 
-                        onClick={resetForm}
-                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
-                      >
-                          {t('cancel')}
-                      </button>
-                      <button 
-                        type="submit" 
-                        className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
-                      >
-                          {editingId ? t('save_changes') : t('save_income')}
+      {/* Add/Edit Modal */}
+      {(isModalVisible || isAdding) && createPortal(
+          <div className={`fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 transition-all duration-200`}>
+              <div 
+                className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${isAdding ? 'opacity-100' : 'opacity-0'}`}
+                onClick={resetForm}
+              />
+              
+              <div className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh] z-10 relative transform transition-all duration-300 ease-out ${isAdding ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 opacity-0'}`}>
+                  {/* Fixed Header */}
+                  <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
+                      <h3 className="text-xl font-bold text-slate-800">{editingId ? t('edit_income') : t('add_income')}</h3>
+                      <button onClick={resetForm} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
+                          <X className="w-5 h-5" />
                       </button>
                   </div>
-              </form>
-          </div>
+
+                  {/* Scrollable Body */}
+                  <div className="overflow-y-auto custom-scrollbar p-5 md:p-6 flex-1">
+                      <form onSubmit={handleSubmit} className="space-y-5">
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_name')}</label>
+                              <input 
+                                required
+                                type="text" 
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="e.g. Salary, Dividend, Loan Repayment"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
+                              <textarea 
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                placeholder="Details about this income..."
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
+                              <input 
+                                required
+                                type="number" 
+                                step="0.01"
+                                value={amount}
+                                onChange={e => setAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                              />
+                          </div>
+                          <div>
+                              <DatePicker 
+                                label={t('expected_date')}
+                                value={expectedDate}
+                                onChange={setExpectedDate}
+                                required
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('target_acc')}</label>
+                              <select 
+                                required
+                                value={targetAccountId}
+                                onChange={e => setTargetAccountId(e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                              >
+                                  <option value="">{t('select_acc')}</option>
+                                  {accounts.map(acc => (
+                                      <option key={acc.id} value={acc.id}>{acc.name}</option>
+                                  ))}
+                              </select>
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_type')}</label>
+                              <select 
+                                required
+                                value={type}
+                                onChange={e => setType(e.target.value as any)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                              >
+                                  <option value="ONE_TIME">{t('one_time')}</option>
+                                  <option value="RECURRING">{t('recurring')}</option>
+                              </select>
+                          </div>
+
+                          <div className="flex justify-end gap-3 pt-2">
+                              <button 
+                                type="button" 
+                                onClick={resetForm}
+                                className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors active:scale-95 duration-200"
+                              >
+                                  {t('cancel')}
+                              </button>
+                              <button 
+                                type="submit" 
+                                className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-lg shadow-blue-200 active:scale-95 duration-200"
+                              >
+                                  {editingId ? t('save_changes') : t('save_income')}
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+          </div>,
+          document.body
       )}
 
       {/* Pending List */}
-      <div>
+      <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
           <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
               <Clock className="w-5 h-5 text-emerald-500" />
               {t('pending_income')}
@@ -295,7 +315,7 @@ const Receivables: React.FC = () => {
 
       {/* Received List */}
       {receivedReceivables.length > 0 && (
-          <div className="pt-6">
+          <div className="pt-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
               <h3 className="text-lg font-bold text-slate-700 mb-3 flex items-center gap-2 opacity-75">
                   <Check className="w-5 h-5 text-emerald-500" />
                   {t('received_history')}

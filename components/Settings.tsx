@@ -268,11 +268,18 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
+      {/* Footer */}
+      <div className="pt-8 pb-4 text-center text-slate-400">
+          <p className="text-sm font-medium">SamFinance v1.0.0</p>
+          <p className="text-xs mt-1">© {new Date().getFullYear()} Saminda Lakshan. All rights reserved.</p>
+      </div>
+
       {/* Import Modal */}
       {showImportModal && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-                  <div className="flex justify-between items-center p-5 border-b border-slate-100">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-6">
+              <div className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85dvh] md:max-h-[90vh] ${showImportModal ? 'animate-slide-up md:animate-zoom-in' : 'animate-slide-down md:animate-zoom-out'}`}>
+                  {/* Fixed Header */}
+                  <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
                       <div className="flex items-center gap-3">
                           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                                 <Terminal className="w-5 h-5" />
@@ -290,8 +297,9 @@ const Settings: React.FC = () => {
                       </button>
                   </div>
                   
-                  <div className="p-5 flex-1 flex flex-col min-h-0">
-                      <div className="relative flex-1">
+                  {/* Scrollable Body */}
+                  <div className="p-5 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+                      <div className="relative flex-1 min-h-[200px]">
                         <textarea
                             autoFocus
                             value={importJson}
@@ -300,7 +308,7 @@ const Settings: React.FC = () => {
                                 if(pasteError) setPasteError(null);
                             }}
                             placeholder='{ "version": 1, "accounts": [...], ... }'
-                            className="w-full h-full min-h-[300px] p-4 bg-slate-800 text-slate-100 font-mono text-xs rounded-xl border-2 border-transparent focus:border-emerald-500 outline-none resize-none custom-scrollbar leading-relaxed"
+                            className="w-full h-full p-4 bg-slate-800 text-slate-100 font-mono text-xs rounded-xl border-2 border-transparent focus:border-emerald-500 outline-none resize-none leading-relaxed"
                             spellCheck="false"
                         />
                         {/* Paste Hint */}
@@ -315,14 +323,15 @@ const Settings: React.FC = () => {
                       </div>
                       
                       {pasteError && (
-                          <div className="mt-3 p-3 bg-rose-50 text-rose-600 text-sm rounded-lg flex items-center font-medium animate-in slide-in-from-top-1">
+                          <div className="mt-3 p-3 bg-rose-50 text-rose-600 text-sm rounded-lg flex items-center font-medium animate-in slide-in-from-top-1 flex-shrink-0">
                               <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
                               {pasteError}
                           </div>
                       )}
                   </div>
 
-                  <div className="p-5 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50 rounded-b-2xl">
+                  {/* Fixed Footer */}
+                  <div className="p-5 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50 rounded-b-none md:rounded-b-2xl pb-8 sm:pb-5 flex-shrink-0">
                         <button 
                             onClick={() => { setShowImportModal(false); setImportJson(''); setPasteError(null); }}
                             className="px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl font-medium transition-all"

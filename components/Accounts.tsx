@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Plus, Trash2, Wallet, User, Building, Edit2, CreditCard, Landmark, Check, AlertTriangle, ChevronDown, Layers, X, AlignLeft } from 'lucide-react';
@@ -348,146 +349,162 @@ const Accounts: React.FC = () => {
         )}
       </div>
 
-      {/* Edit/Add Modal */}
-      {(isModalVisible || isModalOpen) && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200`}>
-          <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={resetForm} />
-          <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 md:p-8 overflow-y-auto max-h-[90vh] z-10 relative ${isModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-800">{editingId ? t('edit_acc') : t('new_acc')}</h3>
+      {/* Edit/Add Modal - Portal for z-index safety */}
+      {(isModalVisible || isModalOpen) && createPortal(
+        <div className={`fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 transition-all duration-200`}>
+          <div className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${isModalOpen ? 'opacity-100' : 'opacity-0'}`} onClick={resetForm} />
+          
+          {/* Modal Container: Flex Column to keep header fixed */}
+          {/* Mobile: rounded-t-2xl, bottom-aligned, translate-y animation */}
+          {/* Desktop: rounded-2xl, centered, scale animation */}
+          <div 
+            className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh] z-10 relative transform transition-all duration-300 ease-out ${
+                isModalOpen 
+                ? 'translate-y-0 scale-100 opacity-100' 
+                : 'translate-y-full md:translate-y-0 md:scale-95 opacity-0'
+            }`}
+          >
+            
+            {/* Fixed Header */}
+            <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
+                <h3 className="text-xl font-bold text-slate-800">{editingId ? t('edit_acc') : t('new_acc')}</h3>
                 <button onClick={resetForm} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
                     <X className="w-5 h-5" />
                 </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_name')}</label>
-                <input
-                  required
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white"
-                  placeholder="e.g. Chase Checkings"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white resize-none h-20"
-                  placeholder="What is this account for?"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('parent_acc')}</label>
-                <div className="relative">
-                    <Layers className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
-                    <select
-                        value={parentAccountId}
-                        onChange={(e) => setParentAccountId(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white appearance-none"
-                    >
-                        <option value="">No Parent (Top Level)</option>
-                        {accounts
-                            .filter(a => a.id !== editingId) // Prevent self-parenting
-                            .map(a => (
-                                <option key={a.id} value={a.id}>{a.name}</option>
-                        ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto p-5 md:p-6 custom-scrollbar">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_type')}</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_name')}</label>
+                    <input
+                      required
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white"
+                      placeholder="e.g. Chase Checkings"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white resize-none h-20"
+                      placeholder="What is this account for?"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('parent_acc')}</label>
                     <div className="relative">
+                        <Layers className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
                         <select
-                            value={type}
-                            onChange={(e: any) => setType(e.target.value)}
-                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white appearance-none"
+                            value={parentAccountId}
+                            onChange={(e) => setParentAccountId(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white appearance-none"
                         >
-                            <option value="BANK">Bank</option>
-                            <option value="CASH">Cash</option>
-                            <option value="STAKEHOLDER">Stakeholder</option>
-                            <option value="ASSET">Asset</option>
-                            <option value="LIABILITY">Liability</option>
-                            <option value="OTHER">Other</option>
+                            <option value="">No Parent (Top Level)</option>
+                            {accounts
+                                .filter(a => a.id !== editingId) // Prevent self-parenting
+                                .map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
                         </select>
                         <ChevronDown className="absolute right-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
-                  <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('init_balance')}</label>
-                     <input
-                        type="number"
-                        step="0.01"
-                        value={initialBalance}
-                        onChange={(e) => setInitialBalance(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white"
-                        placeholder="0.00"
-                    />
-                  </div>
-              </div>
 
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${includeInNetWorth ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'}`}>
-                        {includeInNetWorth && <Check className="w-4 h-4" />}
-                    </div>
-                    <input type="checkbox" className="hidden" checked={includeInNetWorth} onChange={e => setIncludeInNetWorth(e.target.checked)} />
-                    <div>
-                        <span className="text-sm font-bold text-slate-700 block">{t('include_nw')}</span>
-                        <span className="text-xs text-slate-500">Uncheck this if the money doesn't belong to you.</span>
-                    </div>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('color_tag')}</label>
-                <div className="flex flex-wrap gap-3">
-                    {COLORS.map(c => (
-                        <button
-                            key={c}
-                            type="button"
-                            onClick={() => setColor(c)}
-                            className={`w-10 h-10 rounded-xl transition-all shadow-sm ${color === c ? 'ring-2 ring-offset-2 ring-slate-800 scale-110' : 'hover:scale-105'}`}
-                            style={{ backgroundColor: c }}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_type')}</label>
+                        <div className="relative">
+                            <select
+                                value={type}
+                                onChange={(e: any) => setType(e.target.value)}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white appearance-none"
+                            >
+                                <option value="BANK">Bank</option>
+                                <option value="CASH">Cash</option>
+                                <option value="STAKEHOLDER">Stakeholder</option>
+                                <option value="ASSET">Asset</option>
+                                <option value="LIABILITY">Liability</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+                      <div>
+                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('init_balance')}</label>
+                         <input
+                            type="number"
+                            step="0.01"
+                            value={initialBalance}
+                            onChange={(e) => setInitialBalance(e.target.value)}
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white"
+                            placeholder="0.00"
                         />
-                    ))}
-                </div>
-              </div>
+                      </div>
+                  </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-lg shadow-blue-200 active:scale-95 duration-200"
-                >
-                  {editingId ? t('save_changes') : t('create')}
-                </button>
-              </div>
-            </form>
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${includeInNetWorth ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'}`}>
+                            {includeInNetWorth && <Check className="w-4 h-4" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={includeInNetWorth} onChange={e => setIncludeInNetWorth(e.target.checked)} />
+                        <div>
+                            <span className="text-sm font-bold text-slate-700 block">{t('include_nw')}</span>
+                            <span className="text-xs text-slate-500">Uncheck this if the money doesn't belong to you.</span>
+                        </div>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t('color_tag')}</label>
+                    <div className="flex flex-wrap gap-3">
+                        {COLORS.map(c => (
+                            <button
+                                key={c}
+                                type="button"
+                                onClick={() => setColor(c)}
+                                className={`w-10 h-10 rounded-xl transition-all shadow-sm ${color === c ? 'ring-2 ring-offset-2 ring-slate-800 scale-110' : 'hover:scale-105'}`}
+                                style={{ backgroundColor: c }}
+                            />
+                        ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-lg shadow-blue-200 active:scale-95 duration-200"
+                    >
+                      {editingId ? t('save_changes') : t('create')}
+                    </button>
+                  </div>
+                </form>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Delete Confirmation Modal */}
-      {(isDeleteModalVisible || deleteConfirmation.isOpen) && deleteConfirmation.account && (
-         <div className={`fixed inset-0 z-50 flex items-center justify-center p-4`}>
-            <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${deleteConfirmation.isOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setDeleteConfirmation({ isOpen: false, account: null })} />
-            <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative ${deleteConfirmation.isOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
+      {/* Delete Confirmation Modal - Portal for safety */}
+      {(isDeleteModalVisible || deleteConfirmation.isOpen) && deleteConfirmation.account && createPortal(
+         <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4`}>
+            <div className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200 ${deleteConfirmation.isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setDeleteConfirmation({ isOpen: false, account: null })} />
+            <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative transform transition-all duration-200 ${deleteConfirmation.isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
                 <div className="flex flex-col items-center text-center mb-6">
                     <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600 animate-pulse">
                         <AlertTriangle className="w-8 h-8" />
@@ -517,7 +534,8 @@ const Accounts: React.FC = () => {
                     </button>
                 </div>
             </div>
-         </div>
+         </div>,
+         document.body
       )}
     </div>
   );
