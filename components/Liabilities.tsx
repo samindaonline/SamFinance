@@ -2,18 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, X, Info } from 'lucide-react';
+import { Plus, Check, Clock, Calendar, AlertTriangle, Trash2, ArrowRight, X, Info } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import DatePicker from './DatePicker';
 import HelpModal from './HelpModal';
 
 const Liabilities: React.FC = () => {
-  const { liabilities, accounts, addLiability, toggleLiabilityStatus, deleteLiability, formatCurrency } = useFinance();
+  const { liabilities, accounts, addLiability, toggleLiabilityStatus, payLiability, deleteLiability, formatCurrency } = useFinance();
   const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   
+  // Delete Confirmation State
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   // Animation Handling
   useEffect(() => {
       if(isAdding) setIsModalVisible(true);
@@ -48,6 +51,17 @@ const Liabilities: React.FC = () => {
     setDueDate(format(new Date(), 'yyyy-MM-dd'));
     setPaymentAccountId('');
     setIsAdding(false);
+  };
+
+  const handleDeleteClick = (id: string) => {
+      setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+      if (deleteId) {
+          deleteLiability(deleteId);
+          setDeleteId(null);
+      }
   };
 
   const parseDate = (str: string) => {
@@ -243,22 +257,22 @@ const Liabilities: React.FC = () => {
                                 </div>
                                 
                                 <div className="flex items-center justify-between w-full sm:w-auto gap-4 pl-[72px] sm:pl-0">
-                                    <div className="text-right">
-                                        <div className="text-xl font-bold text-slate-800">{formatCurrency(liability.amount)}</div>
+                                    <div className="text-right flex-1 sm:flex-initial min-w-0">
+                                        <div className="text-lg sm:text-xl font-bold text-slate-800 whitespace-nowrap truncate">{formatCurrency(liability.amount)}</div>
                                         <div className={`text-xs font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
                                             {getDueDateLabel(liability.dueDate)}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 flex-shrink-0">
                                         <button 
-                                            onClick={() => toggleLiabilityStatus(liability.id)}
+                                            onClick={() => payLiability(liability.id)}
                                             className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                                             title={t('mark_paid')}
                                         >
                                             <Check className="w-5 h-5" />
                                         </button>
                                         <button 
-                                            onClick={() => { if(confirm('Delete this liability?')) deleteLiability(liability.id); }}
+                                            onClick={() => handleDeleteClick(liability.id)}
                                             className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                                             title="Delete"
                                         >
@@ -310,7 +324,7 @@ const Liabilities: React.FC = () => {
                                     {t('undo')}
                                 </button>
                                 <button 
-                                    onClick={() => deleteLiability(liability.id)}
+                                    onClick={() => handleDeleteClick(liability.id)}
                                     className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -322,6 +336,41 @@ const Liabilities: React.FC = () => {
               </div>
           </div>
       )}
+
+      {/* Delete Confirmation Modal - Custom implementation to avoid native confirm issues */}
+      {deleteId && createPortal(
+         <div className={`fixed inset-0 z-[120] flex items-center justify-center p-4`}>
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteId(null)} />
+            <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative animate-zoom-in">
+                <div className="flex flex-col items-center text-center mb-6">
+                    <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Confirm Deletion</h3>
+                    <p className="text-slate-600 mt-2">
+                        Are you sure you want to remove this liability record?
+                    </p>
+                </div>
+                
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setDeleteId(null)}
+                        className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={confirmDelete}
+                        className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+         </div>,
+         document.body
+      )}
+
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Search, Filter, Trash2, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Calendar, User, Tag, Info } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Calendar, User, Tag, Info, AlertTriangle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import HelpModal from './HelpModal';
 
@@ -11,12 +12,33 @@ const Transactions: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showHelp, setShowHelp] = useState(false);
 
+  // Delete Confirmation State
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (deleteId) setIsDeleteModalVisible(true);
+    else setTimeout(() => setIsDeleteModalVisible(false), 200);
+  }, [deleteId]);
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => 
         t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [transactions, searchTerm]);
+
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+      if (deleteId) {
+          deleteTransaction(deleteId);
+          setDeleteId(null);
+      }
+  };
 
   return (
     <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col">
@@ -57,7 +79,7 @@ const Transactions: React.FC = () => {
             {searchTerm && (
                 <button onClick={() => setSearchTerm('')} className="p-1 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600">
                     <span className="sr-only">Clear</span>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <X className="w-4 h-4" />
                 </button>
             )}
           </div>
@@ -143,7 +165,7 @@ const Transactions: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <button 
-                                        onClick={() => { if(confirm('Are you sure?')) deleteTransaction(tx.id); }} 
+                                        onClick={(e) => handleDeleteClick(tx.id, e)} 
                                         className="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100"
                                         title={t('delete_tx')}
                                     >
@@ -229,7 +251,7 @@ const Transactions: React.FC = () => {
 
                     <div className="mt-3 flex justify-end">
                         <button 
-                            onClick={() => { if(confirm('Delete transaction?')) deleteTransaction(tx.id); }} 
+                            onClick={(e) => handleDeleteClick(tx.id, e)} 
                             className="flex items-center text-rose-500 text-xs font-bold px-3 py-1.5 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
                         >
                             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
@@ -245,6 +267,44 @@ const Transactions: React.FC = () => {
              </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {(isDeleteModalVisible || deleteId) && createPortal(
+         <div className={`fixed inset-0 z-[120] flex items-center justify-center p-4`}>
+            <div 
+                className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200 ${deleteId ? 'opacity-100' : 'opacity-0'}`} 
+                onClick={() => setDeleteId(null)} 
+            />
+            <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative transform transition-all duration-200 ${deleteId ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+                <div className="flex flex-col items-center text-center mb-6">
+                    <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600 animate-pulse">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Delete Transaction?</h3>
+                    <p className="text-slate-600 mt-2">
+                        Are you sure you want to remove this record? This affects your account balance.
+                    </p>
+                </div>
+                
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setDeleteId(null)}
+                        className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
+                    >
+                        {t('cancel')}
+                    </button>
+                    <button
+                        onClick={confirmDelete}
+                        className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200 active:scale-95 duration-200"
+                    >
+                        {t('delete')}
+                    </button>
+                </div>
+            </div>
+         </div>,
+         document.body
+      )}
+
     </div>
   );
 };

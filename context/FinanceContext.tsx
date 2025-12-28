@@ -2,8 +2,18 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Account, Transaction, Liability, Receivable, BudgetProject, FinanceContextType } from '../types';
 import { storage } from '../utils/storage';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, CURRENCIES } from '../constants';
+import { addMonths, format, getDaysInMonth, setDate, isValid } from 'date-fns';
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
+
+// Robust ID Generator Helper
+const generateId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // Fallback for environments where crypto.randomUUID is not available (e.g. non-secure contexts)
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -70,7 +80,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addAccount = (account: Omit<Account, 'id'>) => {
     const newAccount: Account = {
       ...account,
-      id: crypto.randomUUID()
+      id: generateId()
     };
     setAccounts(prev => [...prev, newAccount]);
   };
@@ -90,7 +100,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
       ...transaction,
-      id: crypto.randomUUID()
+      id: generateId()
     };
     setTransactions(prev => [newTransaction, ...prev]);
   };
@@ -112,7 +122,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addLiability = (liability: Omit<Liability, 'id' | 'status'>) => {
     const newLiability: Liability = {
       ...liability,
-      id: crypto.randomUUID(),
+      id: generateId(),
       status: 'PENDING'
     };
     setLiabilities(prev => [...prev, newLiability]);
@@ -122,6 +132,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLiabilities(prev => prev.map(l => l.id === id ? { ...l, status: l.status === 'PENDING' ? 'PAID' : 'PENDING' } : l));
   };
 
+  const payLiability = (id: string) => {
+      const item = liabilities.find(l => l.id === id);
+      if (!item) {
+          console.error("Liability item not found:", id);
+          return;
+      }
+
+      // 1. Create Transaction (Expense)
+      const newTx: Transaction = {
+          id: generateId(),
+          date: new Date().toISOString(),
+          amount: item.amount,
+          type: 'EXPENSE',
+          accountId: item.paymentAccountId,
+          tags: ['Bill', 'Liability'],
+          description: `Bill Payment: ${item.name}`
+      };
+
+      // Update transactions
+      setTransactions(prev => [newTx, ...prev]);
+
+      // 2. Mark as Paid
+      setLiabilities(prev => prev.map(l => l.id === id ? { ...l, status: 'PAID' } : l));
+  };
+
   const deleteLiability = (id: string) => {
     setLiabilities(prev => prev.filter(l => l.id !== id));
   };
@@ -129,7 +164,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addReceivable = (receivable: Omit<Receivable, 'id' | 'status'>) => {
     const newReceivable: Receivable = {
       ...receivable,
-      id: crypto.randomUUID(),
+      id: generateId(),
       status: 'PENDING'
     };
     setReceivables(prev => [...prev, newReceivable]);
@@ -140,7 +175,75 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const toggleReceivableStatus = (id: string) => {
-    setReceivables(prev => prev.map(r => r.id === id ? { ...r, status: r.status === 'PENDING' ? 'RECEIVED' : 'PENDING' } : r));
+      // Legacy simple toggle - might still be used for undoing 'received' status in history
+      setReceivables(prev => prev.map(r => r.id === id ? { ...r, status: r.status === 'PENDING' ? 'RECEIVED' : 'PENDING' } : r));
+  };
+
+  const receiveIncome = (id: string) => {
+      // Find the item within the current state to ensure valid reference
+      const item = receivables.find(r => r.id === id);
+      if (!item) {
+          console.error("Receivable item not found:", id);
+          return;
+      }
+
+      // 1. Create Transaction (For BOTH One-time and Recurring)
+      const newTx: Transaction = {
+          id: generateId(),
+          date: new Date().toISOString(), // Current date/time
+          amount: item.amount,
+          type: 'INCOME',
+          accountId: item.targetAccountId,
+          tags: ['Income', item.type === 'RECURRING' ? 'Recurring' : 'One-time'],
+          description: `Income: ${item.name}`
+      };
+      
+      // Update transaction state
+      setTransactions(prev => [newTx, ...prev]);
+
+      // 2. Update Receivable Status logic
+      if (item.type === 'ONE_TIME') {
+          // One-time: Move to Received History
+          setReceivables(prev => prev.map(r => r.id === id ? { ...r, status: 'RECEIVED' } : r));
+      } else {
+          // Recurring: 
+          // 1. Keep as PENDING (Do not move to received list).
+          // 2. Advance the expectedDate to next month, preserving the Day of Month preference.
+          
+          let nextDate: Date;
+          try {
+              // Parse as local time to avoid timezone shifts
+              const currentExpected = new Date(item.expectedDate + (item.expectedDate.length === 10 ? 'T00:00:00' : ''));
+              
+              if (!isValid(currentExpected)) {
+                   console.error("Invalid expected date in receivable:", item.expectedDate);
+                   // Fallback to today if corrupt
+                   nextDate = addMonths(new Date(), 1); 
+              } else {
+                   nextDate = addMonths(currentExpected, 1);
+              }
+
+              // If we have a preferred recurring day, enforce it on the next month
+              if (item.recurringDay) {
+                  const daysInNextMonth = getDaysInMonth(nextDate);
+                  // Clamp to the last day of the month if recurringDay (e.g. 31) exceeds it (e.g. Feb 28)
+                  const targetDay = Math.min(item.recurringDay, daysInNextMonth);
+                  nextDate = setDate(nextDate, targetDay);
+              }
+          } catch (error) {
+              console.error("Error calculating next recurring date:", error);
+              // Fallback for safety
+              nextDate = addMonths(new Date(), 1);
+          }
+          
+          const nextDateStr = format(nextDate, 'yyyy-MM-dd');
+
+          setReceivables(prev => prev.map(r => r.id === id ? { 
+              ...r, 
+              status: 'PENDING', // Force pending
+              expectedDate: nextDateStr 
+          } : r));
+      }
   };
 
   const deleteReceivable = (id: string) => {
@@ -149,7 +252,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addBudgetProject = (name: string) => {
     const newProject: BudgetProject = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         name,
         createdAt: new Date().toISOString(),
         items: []
@@ -219,7 +322,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 
                 // If ID is missing, generate one (helps with manually created JSON)
                 if (!processedItem.id) {
-                    processedItem = { ...processedItem, id: crypto.randomUUID() };
+                    processedItem = { ...processedItem, id: generateId() };
                 }
                 
                 // Validate required fields
@@ -425,10 +528,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     removeCategory,
     addLiability,
     toggleLiabilityStatus,
+    payLiability,
     deleteLiability,
     addReceivable,
     updateReceivable,
     toggleReceivableStatus,
+    receiveIncome,
     deleteReceivable,
     addBudgetProject,
     updateBudgetProject,

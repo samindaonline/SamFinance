@@ -6,6 +6,7 @@ import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } fro
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
 import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { CURRENCIES } from '../constants';
 import DatePicker from './DatePicker';
 import HelpModal from './HelpModal';
 
@@ -76,10 +77,19 @@ const Budget: React.FC = () => {
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
 
+  // Add Item Modal State
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [isAddItemModalVisible, setIsAddItemModalVisible] = useState(false);
+
   useEffect(() => {
       if(isCreateModalOpen) setCreateModalVisible(true);
       else setTimeout(() => setCreateModalVisible(false), 300);
   }, [isCreateModalOpen]);
+
+  useEffect(() => {
+      if(isAddItemModalOpen) setIsAddItemModalVisible(true);
+      else setTimeout(() => setIsAddItemModalVisible(false), 300);
+  }, [isAddItemModalOpen]);
 
   // Editor State
   const [items, setItems] = useState<BudgetItem[]>([]);
@@ -155,7 +165,8 @@ const Budget: React.FC = () => {
       }
   };
 
-  const addItemToProject = () => {
+  const handleAddItemSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
       if(!newItemName || !newItemPrice) return;
       const price = Number(newItemPrice);
       
@@ -171,6 +182,7 @@ const Budget: React.FC = () => {
       setNewItemName('');
       setNewItemLink('');
       setNewItemPrice('');
+      setIsAddItemModalOpen(false);
   };
 
   const deleteItem = (itemId: string) => {
@@ -571,12 +583,21 @@ const Budget: React.FC = () => {
 
                           return (
                             <div key={item.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300">
-                                <div className="p-4 flex justify-between items-start bg-slate-50/50 border-b border-slate-100">
+                                <div 
+                                    className="p-4 flex justify-between items-start bg-slate-50/50 border-b border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
+                                    onClick={() => toggleItemExpansion(item.id)}
+                                >
                                     <div className="min-w-0 pr-4">
                                         <div className="flex items-center gap-2">
                                             <h4 className="font-bold text-slate-800 truncate">{item.name}</h4>
                                             {item.link && (
-                                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 flex-shrink-0">
+                                                <a 
+                                                    href={item.link} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-blue-500 hover:text-blue-600 flex-shrink-0"
+                                                >
                                                     <ExternalLink className="w-3 h-3" />
                                                 </a>
                                             )}
@@ -587,19 +608,16 @@ const Budget: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                         <button 
-                                            onClick={() => deleteItem(item.id)} 
+                                            onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} 
                                             className="text-slate-400 hover:text-rose-500 p-1 active:scale-90 duration-200"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
-                                        <button 
-                                            onClick={() => toggleItemExpansion(item.id)}
-                                            className="text-slate-400 hover:text-slate-600 p-1 active:scale-90 duration-200"
-                                        >
+                                        <div className="text-slate-400 p-1">
                                             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
                                                 <ChevronDown className="w-4 h-4" />
                                             </div>
-                                        </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -676,38 +694,75 @@ const Budget: React.FC = () => {
                       })}
                   </div>
 
-                  {/* Add Item Form */}
-                  <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
-                      <h4 className="font-bold text-slate-700 mb-3 text-sm">{t('add_product')}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                          <input 
-                            className="md:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder={t('prod_name')}
-                            value={newItemName}
-                            onChange={e => setNewItemName(e.target.value)}
+                  {/* Add Product Button (Opens Modal) */}
+                  <button 
+                    onClick={() => setIsAddItemModalOpen(true)}
+                    className="w-full py-4 border-2 border-dashed border-slate-300 text-slate-500 rounded-2xl hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all font-bold flex items-center justify-center gap-2 group"
+                  >
+                      <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      {t('add_product')}
+                  </button>
+
+                  {/* Add Item Modal */}
+                  {(isAddItemModalVisible || isAddItemModalOpen) && createPortal(
+                      <div className={`fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 transition-all duration-200`}>
+                          <div 
+                              className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${isAddItemModalOpen ? 'opacity-100' : 'opacity-0'}`} 
+                              onClick={() => setIsAddItemModalOpen(false)} 
                           />
-                          <input 
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder={t('price')}
-                            type="number"
-                            value={newItemPrice}
-                            onChange={e => setNewItemPrice(e.target.value)}
-                          />
-                           <input 
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder={t('link_opt')}
-                            value={newItemLink}
-                            onChange={e => setNewItemLink(e.target.value)}
-                          />
-                      </div>
-                      <button 
-                        onClick={addItemToProject}
-                        disabled={!newItemName || !newItemPrice}
-                        className="w-full py-2 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl hover:bg-white hover:text-indigo-600 hover:border-indigo-300 transition-colors disabled:opacity-50 active:scale-95 duration-200"
-                      >
-                          {t('add_item')}
-                      </button>
-                  </div>
+                          
+                          <div className={`bg-white rounded-t-2xl md:rounded-2xl w-full max-w-sm shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh] z-10 relative transform transition-all duration-300 ease-out ${isAddItemModalOpen ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 opacity-0'}`}>
+                              <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
+                                  <h3 className="text-lg font-bold text-slate-800">{t('add_product')}</h3>
+                                  <button onClick={() => setIsAddItemModalOpen(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90">
+                                      <X className="w-5 h-5" />
+                                  </button>
+                              </div>
+                              
+                              <div className="p-6 overflow-y-auto">
+                                  <form onSubmit={handleAddItemSubmit} className="space-y-4">
+                                      <div>
+                                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('prod_name')}</label>
+                                          <input 
+                                              autoFocus
+                                              className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                                              placeholder="e.g. iPhone 15"
+                                              value={newItemName}
+                                              onChange={e => setNewItemName(e.target.value)}
+                                              required
+                                          />
+                                      </div>
+                                      <div>
+                                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('price')}</label>
+                                          <input 
+                                              type="number"
+                                              className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                                              placeholder="0.00"
+                                              value={newItemPrice}
+                                              onChange={e => setNewItemPrice(e.target.value)}
+                                              required
+                                          />
+                                      </div>
+                                      <div>
+                                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('link_opt')}</label>
+                                          <input 
+                                              className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                                              placeholder="https://..."
+                                              value={newItemLink}
+                                              onChange={e => setNewItemLink(e.target.value)}
+                                          />
+                                      </div>
+                                      
+                                      <div className="flex justify-end gap-3 pt-2">
+                                          <button type="button" onClick={() => setIsAddItemModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">{t('cancel')}</button>
+                                          <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">{t('add_item')}</button>
+                                      </div>
+                                  </form>
+                              </div>
+                          </div>
+                      </div>,
+                      document.body
+                  )}
 
                   {chartData.length > 0 && (
                         <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{animationDelay: '100ms'}}>
@@ -929,7 +984,6 @@ const Budget: React.FC = () => {
   );
 };
 
-// ... PaymentBuilder Component (Unchanged) ...
 const PaymentBuilder: React.FC<{ 
     totalPrice: number; 
     existingInstallments: BudgetInstallment[]; 
@@ -938,7 +992,27 @@ const PaymentBuilder: React.FC<{
     onCancel: () => void;
     t: (k: any) => string;
 }> = ({ totalPrice, existingInstallments, accounts, onSave, onCancel, t }) => {
-    // Determine initial count. If 0 existing, default to 1.
+    // Get Currency
+    const { currency } = useFinance();
+    const currencySymbol = useMemo(() => {
+        return CURRENCIES.find(c => c.code === currency)?.symbol || currency;
+    }, [currency]);
+
+    // Filter accounts: Cash or Sub-accounts only
+    const validAccounts = useMemo(() => {
+        return accounts.filter(a => a.type === 'CASH' || !!a.parentAccountId);
+    }, [accounts]);
+
+    // Initial Account Logic
+    const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
+        if (existingInstallments.length > 0) {
+            const currentId = existingInstallments[0].accountId;
+            if (validAccounts.some(a => a.id === currentId)) return currentId;
+        }
+        return validAccounts[0]?.id || '';
+    });
+
+    // Initial Count Logic
     const initialCount = existingInstallments.length > 0 ? existingInstallments.length : 1;
     const [installmentsCount, setInstallmentsCount] = useState<number>(initialCount);
 
@@ -947,11 +1021,17 @@ const PaymentBuilder: React.FC<{
             id: crypto.randomUUID(),
             date: format(new Date(), 'yyyy-MM-dd'),
             amount: totalPrice,
-            accountId: accounts[0]?.id || ''
+            accountId: selectedAccountId
         }]
     );
 
-    // Auto-calculate splits when count changes
+    // Update all installments when selected account changes
+    useEffect(() => {
+        if (selectedAccountId) {
+            setInstallments(prev => prev.map(i => ({ ...i, accountId: selectedAccountId })));
+        }
+    }, [selectedAccountId]);
+
     const handleCountChange = (newCount: number) => {
         if (newCount < 1) newCount = 1;
         setInstallmentsCount(newCount);
@@ -959,11 +1039,9 @@ const PaymentBuilder: React.FC<{
         const newInstallments: BudgetInstallment[] = [];
         const baseAmount = Math.floor((totalPrice / newCount) * 100) / 100;
         let remainder = totalPrice - (baseAmount * newCount);
-        // Fix floating point issues
         remainder = Math.round(remainder * 100) / 100;
 
         for (let i = 0; i < newCount; i++) {
-            // Distribute remainder pennies to the first few installments
             let amount = baseAmount;
             if (remainder > 0) {
                 amount += 0.01;
@@ -972,9 +1050,9 @@ const PaymentBuilder: React.FC<{
 
             newInstallments.push({
                 id: crypto.randomUUID(),
-                date: format(addMonths(new Date(), i), 'yyyy-MM-dd'), // Consecutive months
+                date: format(addMonths(new Date(), i), 'yyyy-MM-dd'),
                 amount: Number(amount.toFixed(2)),
-                accountId: accounts[0]?.id || '' // Default to first account
+                accountId: selectedAccountId
             });
         }
         setInstallments(newInstallments);
@@ -982,7 +1060,7 @@ const PaymentBuilder: React.FC<{
 
     const allocated = installments.reduce((sum, i) => sum + i.amount, 0);
     const remaining = totalPrice - allocated;
-    const isValid = Math.abs(remaining) < 0.01 && installments.every(i => i.amount > 0 && i.accountId && i.date);
+    const isValid = Math.abs(remaining) < 0.01 && selectedAccountId !== '' && installments.every(i => i.amount > 0 && i.date);
 
     const updateRow = (id: string, field: keyof BudgetInstallment, value: any) => {
         setInstallments(installments.map(i => i.id === id ? { ...i, [field]: value } : i));
@@ -994,63 +1072,95 @@ const PaymentBuilder: React.FC<{
         setInstallmentsCount(newInst.length);
     };
 
+    if (validAccounts.length === 0) {
+        return (
+             <div className="p-4 bg-amber-50 rounded-xl text-amber-800 text-sm border border-amber-200">
+                 <p className="font-bold mb-1">No valid payment accounts found.</p>
+                 <p>Please create a <strong>Cash</strong> account (Wallet) or a <strong>Sub-account</strong> under your main bank account to plan payments.</p>
+                 <div className="mt-3 flex justify-end">
+                     <button onClick={onCancel} className="px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-amber-700 hover:bg-amber-100 font-bold text-xs">{t('cancel')}</button>
+                 </div>
+             </div>
+        );
+    }
+
     return (
         <div className="space-y-4">
-            {/* Auto-Split Control */}
-            <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-indigo-900">{t('num_installments')}</label>
-                <input 
-                    type="number" 
-                    min="1" 
-                    max="60"
-                    value={installmentsCount}
-                    onChange={(e) => handleCountChange(parseInt(e.target.value) || 1)}
-                    className="w-20 px-2 py-1 border border-indigo-200 rounded-md text-center font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3 rounded-lg border border-indigo-100">
+                <div>
+                     <label className="block text-xs font-semibold text-indigo-900 mb-1">Payment Account</label>
+                     <select
+                        value={selectedAccountId}
+                        onChange={e => setSelectedAccountId(e.target.value)}
+                        className="w-full px-2 py-1.5 border border-indigo-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                        {validAccounts.map(a => (
+                            <option key={a.id} value={a.id}>
+                                {a.parentAccountId ? '↳ ' : ''}{a.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-semibold text-indigo-900 mb-1">{t('num_installments')}</label>
+                    <input 
+                        type="number" 
+                        min="1" 
+                        max="60"
+                        value={installmentsCount}
+                        onChange={(e) => handleCountChange(parseInt(e.target.value) || 1)}
+                        className="w-full px-2 py-1.5 border border-indigo-200 rounded-lg font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                </div>
             </div>
 
             <div className="space-y-3">
                 {installments.map((inst, idx) => (
-                    <div key={inst.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg md:bg-transparent md:p-0 animate-fade-in" style={{animationDelay: `${idx * 50}ms`}}>
-                        <div className="col-span-1 text-xs font-bold text-slate-400">#{idx + 1}</div>
-                        
-                        <div className="col-span-11 md:col-span-4">
-                            <DatePicker
-                                value={inst.date}
-                                onChange={(val) => updateRow(inst.id, 'date', val)}
-                            />
-                        </div>
-                        
-                        <div className="col-span-1 md:hidden"></div> {/* Spacer for mobile alignment */}
-                        
-                        <div className="col-span-11 md:col-span-4">
-                            <select
-                                value={inst.accountId}
-                                onChange={e => updateRow(inst.id, 'accountId', e.target.value)}
-                                className="w-full px-2 py-2 border border-slate-300 rounded-xl text-sm bg-white"
-                            >
-                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                            </select>
-                        </div>
-                        
-                        <div className="col-span-1 md:hidden"></div> {/* Spacer for mobile alignment */}
-
-                        <div className="col-span-10 md:col-span-3 relative">
-                            <input 
-                                type="number" 
-                                value={inst.amount}
-                                onChange={e => updateRow(inst.id, 'amount', Number(e.target.value))}
-                                className="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-xl text-sm"
-                            />
-                            <DollarSign className="w-3 h-3 absolute left-2 top-2.5 text-slate-400" />
-                        </div>
-                        
-                        <div className="col-span-1 flex justify-end">
-                            {installments.length > 1 && (
-                                <button onClick={() => removeRow(inst.id)} className="text-slate-400 hover:text-rose-500">
+                    <div key={inst.id} className="bg-slate-50 p-3 rounded-xl md:bg-transparent md:p-0 animate-fade-in" style={{animationDelay: `${idx * 50}ms`}}>
+                        {/* Mobile Header: Index + Delete */}
+                        <div className="flex justify-between items-center md:hidden mb-2">
+                             <span className="text-xs font-bold text-slate-400">Installment #{idx + 1}</span>
+                             {installments.length > 1 && (
+                                <button onClick={() => removeRow(inst.id)} className="text-slate-400 hover:text-rose-500 p-1">
                                     <X className="w-4 h-4" />
                                 </button>
-                            )}
+                             )}
+                        </div>
+                        
+                        <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                             {/* Desktop Index */}
+                             <div className="hidden md:block w-8 text-xs font-bold text-slate-400">#{idx + 1}</div>
+
+                             {/* Date */}
+                             <div className="flex-1">
+                                 <DatePicker
+                                     value={inst.date}
+                                     onChange={(val) => updateRow(inst.id, 'date', val)}
+                                 />
+                             </div>
+
+                             {/* Amount */}
+                             <div className="flex-1 relative">
+                                <input 
+                                    type="number" 
+                                    value={inst.amount}
+                                    onChange={e => updateRow(inst.id, 'amount', Number(e.target.value))}
+                                    className="w-full pl-12 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="0.00"
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                                    {currencySymbol}
+                                </div>
+                             </div>
+
+                             {/* Desktop Delete */}
+                             <div className="hidden md:flex w-8 justify-end">
+                                {installments.length > 1 && (
+                                    <button onClick={() => removeRow(inst.id)} className="text-slate-400 hover:text-rose-500 p-1 rounded-lg hover:bg-rose-50 transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                             </div>
                         </div>
                     </div>
                 ))}
@@ -1078,10 +1188,5 @@ const PaymentBuilder: React.FC<{
         </div>
     );
 };
-
-// Simple X icon for helper component
-const X: React.FC<{className?: string}> = ({className}) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
 
 export default Budget;

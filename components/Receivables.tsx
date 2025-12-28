@@ -2,20 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2, X, Info } from 'lucide-react';
-import { format, isPast, isToday } from 'date-fns';
+import { Plus, Minus, Check, Clock, Edit2, X, Info, RefreshCcw, Trash2, AlertTriangle } from 'lucide-react';
+import { format, isPast, isToday, addMonths } from 'date-fns';
 import { Receivable } from '../types';
 import DatePicker from './DatePicker';
 import HelpModal from './HelpModal';
 
 const Receivables: React.FC = () => {
-  const { receivables, accounts, addReceivable, updateReceivable, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
+  const { receivables, accounts, addReceivable, updateReceivable, receiveIncome, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
   const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   
+  // Delete Confirmation State
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   // Animation Handling
   useEffect(() => {
       if(isAdding) setIsModalVisible(true);
@@ -23,34 +26,50 @@ const Receivables: React.FC = () => {
   }, [isAdding]);
 
   // Form State
+  const [type, setType] = useState<Receivable['type']>('ONE_TIME');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [expectedDate, setExpectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [recurringDay, setRecurringDay] = useState(1);
   const [targetAccountId, setTargetAccountId] = useState('');
-  const [type, setType] = useState<Receivable['type']>('ONE_TIME');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (targetAccountId) {
+        
+        // Calculate a valid 'expectedDate' for recurring items for backward compatibility with Dashboard/Forecasts
+        let finalExpectedDate = expectedDate;
+        if (type === 'RECURRING') {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth(); // 0-11
+            
+            // Create a date for this month with the selected day
+            let nextDate = new Date(currentYear, currentMonth, recurringDay);
+            
+            // If that date is in the past (e.g. today is 20th, recurring is 5th), move to next month
+            if (isPast(nextDate) && !isToday(nextDate)) {
+                 nextDate = addMonths(nextDate, 1);
+            }
+            finalExpectedDate = format(nextDate, 'yyyy-MM-dd');
+        }
+
+        const payload = {
+            name,
+            description,
+            amount: Number(amount),
+            type,
+            targetAccountId,
+            expectedDate: finalExpectedDate,
+            recurringDay: type === 'RECURRING' ? Number(recurringDay) : undefined,
+            recurringEndDate: undefined
+        };
+
         if (editingId) {
-             updateReceivable(editingId, {
-                name,
-                description,
-                amount: Number(amount),
-                expectedDate,
-                targetAccountId,
-                type
-            });
+             updateReceivable(editingId, payload);
         } else {
-            addReceivable({
-                name,
-                description,
-                amount: Number(amount),
-                expectedDate,
-                targetAccountId,
-                type
-            });
+            addReceivable(payload);
         }
         resetForm();
     }
@@ -61,10 +80,27 @@ const Receivables: React.FC = () => {
     setName(receivable.name);
     setDescription(receivable.description);
     setAmount(receivable.amount.toString());
-    setExpectedDate(receivable.expectedDate);
     setTargetAccountId(receivable.targetAccountId);
     setType(receivable.type);
+    
+    if (receivable.type === 'RECURRING') {
+        setRecurringDay(receivable.recurringDay || 1);
+    } else {
+        setExpectedDate(receivable.expectedDate);
+    }
+    
     setIsAdding(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+      setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+      if (deleteId) {
+          deleteReceivable(deleteId);
+          setDeleteId(null);
+      }
   };
 
   const resetForm = () => {
@@ -72,6 +108,7 @@ const Receivables: React.FC = () => {
     setDescription('');
     setAmount('');
     setExpectedDate(format(new Date(), 'yyyy-MM-dd'));
+    setRecurringDay(1);
     setTargetAccountId('');
     setType('ONE_TIME');
     setEditingId(null);
@@ -79,7 +116,6 @@ const Receivables: React.FC = () => {
   };
 
   const parseDate = (str: string) => {
-      // Parses YYYY-MM-DD to local date
       if (str.length === 10) return new Date(str + 'T00:00:00');
       return new Date(str);
   };
@@ -87,15 +123,21 @@ const Receivables: React.FC = () => {
   const pendingReceivables = receivables.filter(r => r.status === 'PENDING').sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
   const receivedReceivables = receivables.filter(r => r.status === 'RECEIVED').sort((a, b) => new Date(b.expectedDate).getTime() - new Date(a.expectedDate).getTime());
 
-  const getDateColor = (dateStr: string) => {
-      const date = parseDate(dateStr);
-      if (isPast(date) && !isToday(date)) return 'text-amber-600 bg-amber-50 border-amber-100'; // Overdue but for income it's usually just "late"
+  const getDateColor = (receivable: Receivable) => {
+      if (receivable.type === 'RECURRING') {
+          return 'text-blue-600 bg-blue-50 border-blue-100';
+      }
+      const date = parseDate(receivable.expectedDate);
+      if (isPast(date) && !isToday(date)) return 'text-amber-600 bg-amber-50 border-amber-100';
       if (isToday(date)) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
       return 'text-slate-600 bg-slate-50 border-slate-100';
   };
 
-  const getDateLabel = (dateStr: string) => {
-      const date = parseDate(dateStr);
+  const getDateLabel = (receivable: Receivable) => {
+      if (receivable.type === 'RECURRING') {
+          return `${t('recurring_every')} ${receivable.recurringDay}`;
+      }
+      const date = parseDate(receivable.expectedDate);
       if (isPast(date) && !isToday(date)) return t('overdue');
       if (isToday(date)) return t('expected_today');
       return format(date, 'MMM dd');
@@ -154,6 +196,27 @@ const Receivables: React.FC = () => {
                   {/* Scrollable Body */}
                   <div className="overflow-y-auto custom-scrollbar p-5 md:p-6 flex-1">
                       <form onSubmit={handleSubmit} className="space-y-5">
+                          {/* 1. Type Selection First */}
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_type')}</label>
+                              <div className="flex bg-slate-100 p-1 rounded-xl">
+                                  <button
+                                      type="button"
+                                      onClick={() => setType('ONE_TIME')}
+                                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'ONE_TIME' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                      {t('one_time')}
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={() => setType('RECURRING')}
+                                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'RECURRING' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                      {t('recurring')}
+                                  </button>
+                              </div>
+                          </div>
+
                           <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_name')}</label>
                               <input 
@@ -161,19 +224,11 @@ const Receivables: React.FC = () => {
                                 type="text" 
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                placeholder="e.g. Salary, Dividend, Loan Repayment"
+                                placeholder="e.g. Salary, Dividend"
                                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                               />
                           </div>
-                          <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
-                              <textarea 
-                                value={description}
-                                onChange={e => setDescription(e.target.value)}
-                                placeholder="Details about this income..."
-                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
-                              />
-                          </div>
+
                           <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
                               <input 
@@ -186,14 +241,55 @@ const Receivables: React.FC = () => {
                                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                               />
                           </div>
-                          <div>
-                              <DatePicker 
-                                label={t('expected_date')}
-                                value={expectedDate}
-                                onChange={setExpectedDate}
-                                required
-                              />
-                          </div>
+
+                          {/* Conditional Date Selection */}
+                          {type === 'RECURRING' ? (
+                              <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('recurring_day')}</label>
+                                  <div className="flex items-center gap-3">
+                                      <button 
+                                        type="button"
+                                        onClick={() => setRecurringDay(prev => Math.max(1, prev - 1))}
+                                        className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors active:scale-95"
+                                      >
+                                          <Minus className="w-5 h-5" />
+                                      </button>
+                                      
+                                      <div className="relative flex-1">
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                            value={recurringDay}
+                                            onChange={e => {
+                                                const val = Math.min(31, Math.max(1, Number(e.target.value)));
+                                                setRecurringDay(val);
+                                            }}
+                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium text-center"
+                                            placeholder="Day"
+                                          />
+                                      </div>
+
+                                      <button 
+                                        type="button"
+                                        onClick={() => setRecurringDay(prev => Math.min(31, prev + 1))}
+                                        className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors active:scale-95"
+                                      >
+                                          <Plus className="w-5 h-5" />
+                                      </button>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div>
+                                  <DatePicker 
+                                    label={t('expected_date')}
+                                    value={expectedDate}
+                                    onChange={setExpectedDate}
+                                    required
+                                  />
+                              </div>
+                          )}
+
                           <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">{t('target_acc')}</label>
                               <select 
@@ -208,17 +304,15 @@ const Receivables: React.FC = () => {
                                   ))}
                               </select>
                           </div>
+
                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_type')}</label>
-                              <select 
-                                required
-                                value={type}
-                                onChange={e => setType(e.target.value as any)}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                              >
-                                  <option value="ONE_TIME">{t('one_time')}</option>
-                                  <option value="RECURRING">{t('recurring')}</option>
-                              </select>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
+                              <textarea 
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                placeholder="Details about this income..."
+                                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none"
+                              />
                           </div>
 
                           <div className="flex justify-end gap-3 pt-2">
@@ -253,22 +347,28 @@ const Receivables: React.FC = () => {
               {pendingReceivables.length > 0 ? (
                   pendingReceivables.map(receivable => {
                       const account = accounts.find(a => a.id === receivable.targetAccountId);
-                      const isOverdue = isPast(parseDate(receivable.expectedDate)) && !isToday(parseDate(receivable.expectedDate));
+                      const isOverdue = receivable.type === 'ONE_TIME' && isPast(parseDate(receivable.expectedDate)) && !isToday(parseDate(receivable.expectedDate));
                       
                       return (
                         <div key={receivable.id} className={`bg-white p-4 rounded-xl border transition-all hover:shadow-md ${isOverdue ? 'border-amber-200 shadow-amber-100' : 'border-slate-200 shadow-sm'}`}>
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div className="flex items-start gap-4">
-                                    <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${getDateColor(receivable.expectedDate)} flex-shrink-0`}>
-                                        <span className="text-xs font-bold uppercase">{parseDate(receivable.expectedDate).toLocaleString('default', { month: 'short' })}</span>
-                                        <span className="text-xl font-bold">{parseDate(receivable.expectedDate).getDate()}</span>
+                                    <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${getDateColor(receivable)} flex-shrink-0`}>
+                                        {receivable.type === 'RECURRING' ? (
+                                             <RefreshCcw className="w-6 h-6" />
+                                        ) : (
+                                            <>
+                                                <span className="text-xs font-bold uppercase">{parseDate(receivable.expectedDate).toLocaleString('default', { month: 'short' })}</span>
+                                                <span className="text-xl font-bold">{parseDate(receivable.expectedDate).getDate()}</span>
+                                            </>
+                                        )}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h4 className="font-bold text-slate-800 text-lg">{receivable.name}</h4>
                                             {receivable.type === 'RECURRING' && (
                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-600 flex items-center">
-                                                    <RefreshCcw className="w-3 h-3 mr-1" /> {t('recurring')}
+                                                    {t('recurring')}
                                                 </span>
                                             )}
                                         </div>
@@ -290,29 +390,36 @@ const Receivables: React.FC = () => {
                                 </div>
                                 
                                 <div className="flex items-center justify-between w-full sm:w-auto gap-4 pl-[72px] sm:pl-0">
-                                    <div className="text-right">
-                                        <div className="text-xl font-bold text-emerald-600">+{formatCurrency(receivable.amount)}</div>
+                                    <div className="text-right flex-1 sm:flex-initial min-w-0">
+                                        <div className="text-lg sm:text-xl font-bold text-emerald-600 whitespace-nowrap truncate">+{formatCurrency(receivable.amount)}</div>
                                         <div className={`text-xs font-bold ${isOverdue ? 'text-amber-500' : 'text-slate-400'}`}>
-                                            {getDateLabel(receivable.expectedDate)}
+                                            {getDateLabel(receivable)}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 flex-shrink-0">
                                         <button 
-                                            onClick={() => handleEdit(receivable)}
+                                            onClick={(e) => { e.stopPropagation(); handleEdit(receivable); }}
                                             className="p-2 bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Edit"
                                         >
                                             <Edit2 className="w-5 h-5" />
                                         </button>
                                         <button 
-                                            onClick={() => toggleReceivableStatus(receivable.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // Instant action - No confirm dialog
+                                                receiveIncome(receivable.id);
+                                            }}
                                             className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors"
                                             title={t('mark_received')}
                                         >
                                             <Check className="w-5 h-5" />
                                         </button>
                                         <button 
-                                            onClick={() => { if(confirm('Delete this expected income?')) deleteReceivable(receivable.id); }}
+                                            onClick={(e) => { 
+                                                e.stopPropagation();
+                                                handleDeleteClick(receivable.id);
+                                            }}
                                             className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                                             title="Delete"
                                         >
@@ -332,7 +439,7 @@ const Receivables: React.FC = () => {
           </div>
       </div>
 
-      {/* Received List */}
+      {/* Received List - Only shows One-Time items that were marked received */}
       {receivedReceivables.length > 0 && (
           <div className="pt-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
               <h3 className="text-lg font-bold text-slate-700 mb-3 flex items-center gap-2 opacity-75">
@@ -358,19 +465,14 @@ const Receivables: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <span className="font-bold text-emerald-600/70">+{formatCurrency(receivable.amount)}</span>
                                 <button 
-                                    onClick={() => handleEdit(receivable)}
-                                    className="text-xs text-slate-400 hover:text-blue-600 hover:underline"
-                                >
-                                    Edit
-                                </button>
-                                <button 
-                                    onClick={() => toggleReceivableStatus(receivable.id)}
+                                    onClick={(e) => { e.stopPropagation(); toggleReceivableStatus(receivable.id); }}
                                     className="text-xs text-blue-600 hover:underline"
+                                    title="Move back to pending (Note: Transaction created earlier remains)"
                                 >
                                     {t('undo')}
                                 </button>
                                 <button 
-                                    onClick={() => deleteReceivable(receivable.id)}
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(receivable.id); }}
                                     className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -382,6 +484,41 @@ const Receivables: React.FC = () => {
               </div>
           </div>
       )}
+
+      {/* Delete Confirmation Modal - Custom implementation to avoid native confirm issues */}
+      {deleteId && createPortal(
+         <div className={`fixed inset-0 z-[120] flex items-center justify-center p-4`}>
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteId(null)} />
+            <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 z-10 relative animate-zoom-in">
+                <div className="flex flex-col items-center text-center mb-6">
+                    <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Confirm Deletion</h3>
+                    <p className="text-slate-600 mt-2">
+                        Are you sure you want to remove this income record?
+                    </p>
+                </div>
+                
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setDeleteId(null)}
+                        className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={confirmDelete}
+                        className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+         </div>,
+         document.body
+      )}
+
     </div>
   );
 };

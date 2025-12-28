@@ -5,7 +5,7 @@ export const translations = {
     nav_dashboard: "Dashboard",
     nav_accounts: "Accounts",
     nav_transactions: "Transactions",
-    nav_receivables: "Receivables",
+    nav_receivables: "Expected Income",
     nav_liabilities: "Liabilities",
     nav_budget: "Budget Forecasts",
     nav_categories: "Categories",
@@ -113,14 +113,16 @@ export const translations = {
     no_pending_liab: "No pending liabilities. You're all clear!",
     
     // Receivables
-    rec_title: "Receivables & Income",
+    rec_title: "Expected Income",
     rec_subtitle: "Track expected future income and payments owed to you.",
-    add_rec: "Add Receivable",
+    add_rec: "Add Expected Income",
     edit_income: "Edit Income",
     add_income: "Add Expected Income",
     income_name: "Income Name",
     amount: "Amount",
     expected_date: "Expected Date",
+    recurring_day: "Day of Month",
+    end_date_opt: "End Date (Optional)",
     target_acc: "Target Account",
     income_type: "Income Type",
     one_time: "One-time",
@@ -131,6 +133,7 @@ export const translations = {
     mark_received: "Mark as Received",
     no_pending_rec: "No pending income. Add upcoming payments!",
     expected_today: "Expected Today",
+    recurring_every: "Monthly on day",
     
     // Budget
     bud_title: "Budget Estimations",
@@ -335,14 +338,16 @@ export const translations = {
     no_pending_liab: "විසඳීමට ඇති වගකීම් කිසිවක් නැත!",
     
     // Receivables
-    rec_title: "ලැබීම් සහ ආදායම්",
+    rec_title: "අපේක්ෂිත ආදායම්",
     rec_subtitle: "අපේක්ෂිත ආදායම් හඹා යන්න.",
-    add_rec: "ලැබීමක් එක් කරන්න",
+    add_rec: "ආදායමක් එක් කරන්න",
     edit_income: "ආදායම වෙනස් කරන්න",
     add_income: "අපේක්ෂිත ආදායමක් එක් කරන්න",
     income_name: "ආදායම් නම",
     amount: "වටිනාකම",
     expected_date: "අපේක්ෂිත දිනය",
+    recurring_day: "මාසයේ දිනය",
+    end_date_opt: "අවසන් දිනය (විකල්ප)",
     target_acc: "බැර වන ගිණුම",
     income_type: "ආදායම් වර්ගය",
     one_time: "එක් වරක්",
@@ -353,6 +358,7 @@ export const translations = {
     mark_received: "ලැබුණු බව සලකුණු කරන්න",
     no_pending_rec: "ලැබීමට ඇති ආදායම් කිසිවක් නැත.",
     expected_today: "අද දිනට අපේක්ෂිතයි",
+    recurring_every: "සෑම මසකම",
     
     // Budget
     bud_title: "අයවැය ඇස්තමේන්තු",

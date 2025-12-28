@@ -37,7 +37,9 @@ export interface Receivable {
   name: string;
   description: string;
   amount: number;
-  expectedDate: string; // ISO string YYYY-MM-DD
+  expectedDate: string; // ISO string YYYY-MM-DD. For Recurring, this acts as the next occurrence or base date.
+  recurringDay?: number; // 1-31
+  recurringEndDate?: string; // ISO string YYYY-MM-DD
   targetAccountId: string; // The account intended to receive this
   status: 'PENDING' | 'RECEIVED';
   type: 'ONE_TIME' | 'RECURRING';
@@ -81,10 +83,12 @@ export interface FinanceContextType {
   removeCategory: (category: string) => void;
   addLiability: (liability: Omit<Liability, 'id' | 'status'>) => void;
   toggleLiabilityStatus: (id: string) => void;
+  payLiability: (id: string) => void;
   deleteLiability: (id: string) => void;
   addReceivable: (receivable: Omit<Receivable, 'id' | 'status'>) => void;
   updateReceivable: (id: string, receivable: Partial<Receivable>) => void;
   toggleReceivableStatus: (id: string) => void;
+  receiveIncome: (id: string) => void;
   deleteReceivable: (id: string) => void;
   addBudgetProject: (name: string) => void;
   updateBudgetProject: (project: BudgetProject) => void;
