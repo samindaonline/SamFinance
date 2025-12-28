@@ -41,18 +41,18 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
         <div className="group flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 mb-4 overflow-hidden animate-slide-up hover:-translate-y-0.5">
             {/* Main Header Area */}
             <div 
-                className={`flex items-center justify-between p-5 transition-colors ${children.length > 0 ? 'cursor-pointer hover:bg-slate-50' : ''}`} 
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 transition-colors ${children.length > 0 ? 'cursor-pointer hover:bg-slate-50' : ''}`} 
                 onClick={() => children.length > 0 && setIsExpanded(!isExpanded)}
             >
                 {/* Left: Icon & Details */}
-                <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
+                <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0 pr-0 sm:pr-4 mb-3 sm:mb-0">
                      <div 
                         className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-110 duration-300"
                         style={{ backgroundColor: account.color }}
                     >
                         {React.cloneElement(getIcon(account.type), { className: "w-6 h-6" })}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-slate-800 text-lg truncate">{account.name}</h3>
                         {account.description && (
                             <p className="text-sm text-slate-500 truncate mb-1">{account.description}</p>
@@ -71,9 +71,9 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                 </div>
 
                 {/* Right: Balance & Actions */}
-                <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">
-                    <div className="text-right">
-                         <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-0.5 hidden sm:block">
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto sm:gap-8 gap-4">
+                    <div className="text-left sm:text-right">
+                         <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-0.5 block">
                             {children.length > 0 ? t('total_balance') : t('current_balance')}
                         </p>
                         <p className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${currentBalance < 0 ? 'text-rose-600' : 'text-slate-800'}`}>
@@ -134,68 +134,81 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
 
   // --- Child Row Layout ---
   return (
-    <div className="group relative pl-4 pr-3 py-3 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm transition-all duration-200 animate-fade-in">
+    <div className="group relative pl-2 sm:pl-4 pr-2 sm:pr-3 py-2 sm:py-3 rounded-xl hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm transition-all duration-200 animate-fade-in">
          {/* Tree Indentation Marker */}
-         <div className="absolute left-0 top-3 bottom-3 w-1 bg-slate-300/50 rounded-full ml-1" />
+         <div className="absolute left-0 top-2 bottom-2 w-1 bg-slate-300/30 rounded-full ml-0.5" />
 
          <div 
-            className={`flex items-center justify-between ${children.length > 0 ? 'cursor-pointer' : ''}`} 
+            className={`flex items-center gap-3 ${children.length > 0 ? 'cursor-pointer' : ''}`} 
             onClick={() => children.length > 0 && setIsExpanded(!isExpanded)}
         >
-             <div className="flex items-center gap-3 min-w-0 pr-4">
-                {/* Expand Toggle for nested sub-children */}
+             {/* 1. Toggle/Spacer */}
+             <div className="flex-shrink-0 w-6 flex justify-center">
                 {children.length > 0 ? (
-                     <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-0.5 hover:bg-slate-200 rounded`}>
+                     <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 p-1 hover:bg-slate-200 rounded-full`}>
                          <ChevronDown className="w-4 h-4" />
                      </div>
                 ) : (
-                    <div className="w-4 h-4" /> // Spacer
+                    <div className="w-4 h-4" /> 
                 )}
-
-                <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: account.color }}
-                >
-                     {React.cloneElement(getIcon(account.type), { className: "w-4 h-4" })}
-                </div>
-
-                <div className="min-w-0">
-                     <div className="font-semibold text-slate-700 text-sm truncate">{account.name}</div>
-                     {account.description && (
-                         <div className="text-xs text-slate-400 truncate max-w-[200px]">{account.description}</div>
-                     )}
-                     {children.length > 0 && (
-                         <div className="text-[10px] text-slate-400 font-medium">{children.length} sub-accounts</div>
-                     )}
-                </div>
              </div>
 
-             <div className="flex items-center gap-4 flex-shrink-0">
-                 <div className={`font-mono text-sm font-bold text-right ${currentBalance < 0 ? 'text-rose-600' : 'text-slate-700'}`}>
-                    {formatCurrency(currentBalance)}
-                 </div>
+             {/* 2. Icon - Bigger on mobile (44px/h-11), smaller on desktop (36px/h-9) */}
+             <div 
+                className="w-11 h-11 sm:w-9 sm:h-9 rounded-2xl sm:rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-105"
+                style={{ backgroundColor: account.color }}
+             >
+                 {React.cloneElement(getIcon(account.type), { className: "w-5 h-5 sm:w-4 sm:h-4" })}
+             </div>
 
-                 {/* Actions: Hover Only on Desktop */}
-                 <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                    {!isDefaultAccount && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onEdit(account); }}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg active:scale-90"
-                            title="Edit"
-                        >
-                            <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                    {!isDefaultAccount && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onDelete(account); }}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg active:scale-90"
-                            title="Delete"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                    )}
+             {/* 3. Content Area */}
+             <div className="flex-1 min-w-0 flex items-center justify-between h-11 sm:h-auto">
+                
+                {/* Left Side: Name & Balance (Mobile) / Name & Desc (Desktop) */}
+                <div className="flex flex-col justify-center sm:flex-row sm:items-center h-full sm:h-auto gap-0 sm:gap-4 min-w-0">
+                    <div className="font-bold text-slate-800 text-sm sm:text-sm truncate leading-tight">
+                        {account.name}
+                    </div>
+                    
+                    {/* Mobile: Balance under name */}
+                    <div className={`sm:hidden font-mono text-xs font-bold ${currentBalance < 0 ? 'text-rose-600' : 'text-slate-500'} mt-0.5`}>
+                        {formatCurrency(currentBalance)}
+                    </div>
+
+                    {/* Desktop: Description */}
+                    <div className="hidden sm:block text-xs text-slate-400 truncate max-w-[200px]">
+                        {account.description || (children.length > 0 ? `${children.length} sub-accounts` : '')}
+                    </div>
                 </div>
+
+                {/* Right Side: Actions (Mobile) / Balance & Actions (Desktop) */}
+                <div className="flex items-center gap-2 pl-2">
+                     {/* Desktop: Balance */}
+                     <div className={`hidden sm:block font-mono text-sm font-bold text-right ${currentBalance < 0 ? 'text-rose-600' : 'text-slate-700'}`}>
+                        {formatCurrency(currentBalance)}
+                     </div>
+
+                     {/* Actions */}
+                     <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                        {!isDefaultAccount && (
+                            <>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onEdit(account); }}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg active:scale-90"
+                            >
+                                <Edit2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onDelete(account); }}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg active:scale-90"
+                            >
+                                <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                            </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
              </div>
          </div>
 
