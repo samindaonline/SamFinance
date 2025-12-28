@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
 import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
@@ -9,7 +10,7 @@ import DatePicker from './DatePicker';
 
 // --- Sub-components for better organization ---
 
-const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDelete: (e: React.MouseEvent) => void; formatCurrency: (n: number) => string }> = ({ project, onClick, onDelete, formatCurrency }) => {
+const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDelete: (e: React.MouseEvent) => void; formatCurrency: (n: number) => string; t: (k: any) => string }> = ({ project, onClick, onDelete, formatCurrency, t }) => {
     const totalCost = project.items.reduce((sum, item) => sum + item.totalPrice, 0);
     const itemCount = project.items.length;
 
@@ -31,11 +32,11 @@ const ProjectCard: React.FC<{ project: BudgetProject; onClick: () => void; onDel
             
             <div className="flex justify-between items-end border-t border-slate-100 pt-3">
                 <div>
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Est.</span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('total_est')}</span>
                     <div className="font-bold text-slate-800 text-lg">{formatCurrency(totalCost)}</div>
                 </div>
                 <div className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-lg">
-                    {itemCount} Items
+                    {itemCount} {t('items')}
                 </div>
             </div>
         </div>
@@ -63,6 +64,7 @@ const Budget: React.FC = () => {
     getAccountBalance,
     formatCurrency 
   } = useFinance();
+  const { t } = useLanguage();
 
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [activeProject, setActiveProject] = useState<BudgetProject | null>(null);
@@ -441,8 +443,8 @@ const Budget: React.FC = () => {
           <div className="space-y-6 pb-20 md:pb-0">
                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="animate-slide-up">
-                        <h2 className="text-2xl font-bold text-slate-800">Budget Estimations</h2>
-                        <p className="text-slate-500 text-sm">Plan big purchases and check affordability.</p>
+                        <h2 className="text-2xl font-bold text-slate-800">{t('bud_title')}</h2>
+                        <p className="text-slate-500 text-sm">{t('bud_subtitle')}</p>
                     </div>
                     <button
                         onClick={() => setCreateModalOpen(true)}
@@ -450,7 +452,7 @@ const Budget: React.FC = () => {
                         style={{ animationDelay: '50ms' }}
                     >
                         <Plus className="w-5 h-5 mr-2" />
-                        Create Forecast
+                        {t('create_forecast')}
                     </button>
                </div>
 
@@ -462,14 +464,15 @@ const Budget: React.FC = () => {
                                 onClick={() => openProject(project)} 
                                 onDelete={(e) => deleteProject(project.id, e)}
                                 formatCurrency={formatCurrency}
+                                t={t}
                             />
                         </div>
                     ))}
                     {budgetProjects.length === 0 && (
                         <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 animate-fade-in">
                             <Calculator className="w-12 h-12 text-slate-300 mb-4" />
-                            <p className="font-bold text-slate-600">No forecasts yet</p>
-                            <p className="text-sm">Create a new project to start estimating costs.</p>
+                            <p className="font-bold text-slate-600">{t('no_forecasts')}</p>
+                            <p className="text-sm">{t('create_project_msg')}</p>
                         </div>
                     )}
                </div>
@@ -479,9 +482,9 @@ const Budget: React.FC = () => {
                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isCreateModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={() => setCreateModalOpen(false)} />
                         <div className={`bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl z-10 relative ${isCreateModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
-                           <h3 className="text-lg font-bold text-slate-800 mb-4">New Forecast Project</h3>
+                           <h3 className="text-lg font-bold text-slate-800 mb-4">{t('new_forecast')}</h3>
                            <form onSubmit={handleCreateProject}>
-                               <label className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
+                               <label className="block text-sm font-medium text-slate-700 mb-1">{t('proj_name')}</label>
                                <input 
                                     autoFocus
                                     type="text" 
@@ -492,8 +495,8 @@ const Budget: React.FC = () => {
                                     required
                                />
                                <div className="flex justify-end gap-3">
-                                   <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">Cancel</button>
-                                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">Create</button>
+                                   <button type="button" onClick={() => setCreateModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl active:scale-95 duration-200">{t('cancel')}</button>
+                                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium active:scale-95 duration-200">{t('create')}</button>
                                </div>
                            </form>
                        </div>
@@ -515,11 +518,11 @@ const Budget: React.FC = () => {
                   </button>
                   <div>
                       <h2 className="text-2xl font-bold text-slate-800">{activeProject?.name}</h2>
-                      <p className="text-slate-500 text-xs">Edit items and payment plans to see impact.</p>
+                      <p className="text-slate-500 text-xs">{t('edit_header')}</p>
                   </div>
               </div>
               <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                  Auto-saving enabled
+                  {t('auto_save')}
               </div>
           </div>
 
@@ -573,7 +576,7 @@ const Budget: React.FC = () => {
                                     <div className="p-4">
                                         {editingItemId === item.id ? (
                                             <div className="bg-indigo-50 rounded-xl p-4 animate-fade-in">
-                                                <h5 className="font-bold text-indigo-900 text-sm mb-3">Configure Payments</h5>
+                                                <h5 className="font-bold text-indigo-900 text-sm mb-3">{t('config_pay')}</h5>
                                                 <PaymentBuilder 
                                                     totalPrice={item.totalPrice} 
                                                     existingInstallments={item.installments}
@@ -587,6 +590,7 @@ const Budget: React.FC = () => {
                                                         setExpandedItemIds(newSet);
                                                     }}
                                                     onCancel={() => setEditingItemId(null)}
+                                                    t={t}
                                                 />
                                             </div>
                                         ) : (
@@ -613,13 +617,13 @@ const Budget: React.FC = () => {
                                                         
                                                         <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-100">
                                                             <div className={`text-xs font-bold ${isFullyConfigured ? 'text-emerald-600' : 'text-amber-500'}`}>
-                                                                {isFullyConfigured ? 'Fully Allocation' : `Remaining: ${formatCurrency(item.totalPrice - configuredAmount)}`}
+                                                                {isFullyConfigured ? t('fully_allocated') : `${t('remaining')} ${formatCurrency(item.totalPrice - configuredAmount)}`}
                                                             </div>
                                                             <button 
                                                                 onClick={() => setEditingItemId(item.id)}
                                                                 className="text-xs font-semibold text-indigo-600 hover:underline"
                                                             >
-                                                                Edit Plan
+                                                                {t('edit_plan')}
                                                             </button>
                                                         </div>
                                                     </>
@@ -628,7 +632,7 @@ const Budget: React.FC = () => {
                                                         onClick={() => setEditingItemId(item.id)}
                                                         className="w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-500 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors"
                                                     >
-                                                        Configure Payment Plan
+                                                        {t('config_pay')}
                                                     </button>
                                                 )}
                                             </div>
@@ -642,24 +646,24 @@ const Budget: React.FC = () => {
 
                   {/* Add Item Form */}
                   <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
-                      <h4 className="font-bold text-slate-700 mb-3 text-sm">Add Product / Service</h4>
+                      <h4 className="font-bold text-slate-700 mb-3 text-sm">{t('add_product')}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
                           <input 
                             className="md:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder="Product Name"
+                            placeholder={t('prod_name')}
                             value={newItemName}
                             onChange={e => setNewItemName(e.target.value)}
                           />
                           <input 
                             className="px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder="Price"
+                            placeholder={t('price')}
                             type="number"
                             value={newItemPrice}
                             onChange={e => setNewItemPrice(e.target.value)}
                           />
                            <input 
                             className="px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500"
-                            placeholder="Link (Optional)"
+                            placeholder={t('link_opt')}
                             value={newItemLink}
                             onChange={e => setNewItemLink(e.target.value)}
                           />
@@ -669,7 +673,7 @@ const Budget: React.FC = () => {
                         disabled={!newItemName || !newItemPrice}
                         className="w-full py-2 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl hover:bg-white hover:text-indigo-600 hover:border-indigo-300 transition-colors disabled:opacity-50 active:scale-95 duration-200"
                       >
-                          Add Item
+                          {t('add_item')}
                       </button>
                   </div>
 
@@ -677,7 +681,7 @@ const Budget: React.FC = () => {
                         <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm animate-slide-up" style={{animationDelay: '100ms'}}>
                             <h3 className="font-bold text-slate-800 mb-6 flex items-center">
                                 <TrendingDown className="w-5 h-5 mr-2 text-slate-500" />
-                                Projected Minimum Balances
+                                {t('proj_min_bal')}
                             </h3>
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -744,7 +748,7 @@ const Budget: React.FC = () => {
                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                               <h3 className="font-bold text-slate-800 flex items-center">
                                  <Calendar className="w-5 h-5 mr-2 text-slate-500" />
-                                 Projected Cash Flow
+                                 {t('proj_cash_flow')}
                               </h3>
                               <div className="flex gap-2 w-full sm:w-auto">
                                   <div className="w-1/2 sm:w-36">
@@ -768,11 +772,11 @@ const Budget: React.FC = () => {
                                   <table className="w-full text-left text-sm">
                                       <thead className="bg-slate-50 border-b border-slate-100">
                                           <tr>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Date</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Item</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">Account</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">Amount</th>
-                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">Balance</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{t('date')}</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{t('items')}</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{t('account')}</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">{t('amount')}</th>
+                                              <th className="px-4 py-3 font-semibold text-slate-500 text-right whitespace-nowrap">{t('total_balance')}</th>
                                           </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100">
@@ -839,7 +843,7 @@ const Budget: React.FC = () => {
                   <div className="sticky top-6 space-y-4">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                           <TrendingUp className="w-5 h-5 text-emerald-500" />
-                          Compatibility Check
+                          {t('compatibility')}
                       </h3>
                       
                       {projectionData && Object.keys(projectionData).length > 0 ? (
@@ -861,12 +865,12 @@ const Budget: React.FC = () => {
                                                       <div>
                                                           <div className="text-xs font-bold text-slate-500 uppercase">{m.month}</div>
                                                           <div className={`text-xs ${isLow ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
-                                                              Min: {formatCurrency(m.minBalance)}
+                                                              {t('min_bal')} {formatCurrency(m.minBalance)}
                                                           </div>
                                                       </div>
                                                       <div className="text-right">
                                                           <div className="font-bold text-slate-700 text-sm">{formatCurrency(m.endBalance)}</div>
-                                                          <span className="text-[10px] text-slate-400">Closing</span>
+                                                          <span className="text-[10px] text-slate-400">{t('closing')}</span>
                                                       </div>
                                                   </div>
                                               );
@@ -900,7 +904,8 @@ const PaymentBuilder: React.FC<{
     accounts: Account[];
     onSave: (i: BudgetInstallment[]) => void;
     onCancel: () => void;
-}> = ({ totalPrice, existingInstallments, accounts, onSave, onCancel }) => {
+    t: (k: any) => string;
+}> = ({ totalPrice, existingInstallments, accounts, onSave, onCancel, t }) => {
     // Determine initial count. If 0 existing, default to 1.
     const initialCount = existingInstallments.length > 0 ? existingInstallments.length : 1;
     const [installmentsCount, setInstallmentsCount] = useState<number>(initialCount);
@@ -961,7 +966,7 @@ const PaymentBuilder: React.FC<{
         <div className="space-y-4">
             {/* Auto-Split Control */}
             <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-indigo-900">Number of Installments:</label>
+                <label className="text-sm font-semibold text-indigo-900">{t('num_installments')}</label>
                 <input 
                     type="number" 
                     min="1" 
@@ -1021,21 +1026,21 @@ const PaymentBuilder: React.FC<{
 
             <div className="flex justify-between items-center text-xs font-bold pt-2 border-t border-indigo-100">
                 <span className={remaining !== 0 ? 'text-rose-500' : 'text-emerald-600'}>
-                    Remaining: {remaining.toFixed(2)}
+                    {t('remaining')} {remaining.toFixed(2)}
                 </span>
                 <span className="text-slate-400">
-                    Total: {totalPrice.toFixed(2)}
+                    {t('total')} {totalPrice.toFixed(2)}
                 </span>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-                <button onClick={onCancel} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-lg active:scale-95 duration-200">Cancel</button>
+                <button onClick={onCancel} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-lg active:scale-95 duration-200">{t('cancel')}</button>
                 <button 
                     onClick={() => onSave(installments)} 
                     disabled={!isValid}
                     className="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 active:scale-95 duration-200"
                 >
-                    Confirm Plan
+                    {t('confirm_plan')}
                 </button>
             </div>
         </div>

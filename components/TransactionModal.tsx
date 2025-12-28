@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { TransactionType, Account } from '../types';
 import { format } from 'date-fns';
 import { X, Plus, ChevronDown, Search, Check, Building, Wallet, User, Landmark, CreditCard, Layers } from 'lucide-react';
@@ -41,6 +42,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+    const { t } = useLanguage();
 
     const selectedAccount = accounts.find(a => a.id === selectedId);
 
@@ -102,7 +104,7 @@ const AccountSelect: React.FC<AccountSelectProps> = ({ label, accounts, selected
                         )}
                     </div>
                 ) : (
-                    <span className="text-slate-400">Select an account...</span>
+                    <span className="text-slate-400">{t('select_acc')}</span>
                 )}
                 <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -193,6 +195,7 @@ const TransactionModal: React.FC = () => {
     categories,
     addCategory
   } = useFinance();
+  const { t } = useLanguage();
 
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [amount, setAmount] = useState('');
@@ -278,7 +281,7 @@ const TransactionModal: React.FC = () => {
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
-            <h3 className="text-xl font-bold text-slate-800">Record Transaction</h3>
+            <h3 className="text-xl font-bold text-slate-800">{t('record_tx')}</h3>
             <button 
                 onClick={() => setTransactionModalOpen(false)} 
                 className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200"
@@ -301,7 +304,7 @@ const TransactionModal: React.FC = () => {
                                 type === tab ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
-                            {tab.charAt(0) + tab.slice(1).toLowerCase()}
+                            {t(tab.toLowerCase() as any)}
                         </button>
                     ))}
                 </div>
@@ -309,14 +312,14 @@ const TransactionModal: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <DatePicker
-                            label="Date"
+                            label={t('date')}
                             value={date}
                             onChange={setDate}
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
                         <input
                             type="number"
                             required
@@ -333,7 +336,7 @@ const TransactionModal: React.FC = () => {
                 {/* Custom Account Selector - Source */}
                 <div className="animate-fade-in">
                     <AccountSelect 
-                        label={type === 'INCOME' ? 'To Account' : 'From Account'}
+                        label={type === 'INCOME' ? t('to_acc') : t('from_acc')}
                         accounts={accounts}
                         selectedId={accountId}
                         onChange={setAccountId}
@@ -344,7 +347,7 @@ const TransactionModal: React.FC = () => {
                 {type === 'TRANSFER' && (
                     <div className="animate-fade-in">
                         <AccountSelect 
-                            label="To Account"
+                            label={t('to_acc')}
                             accounts={accounts}
                             selectedId={toAccountId}
                             onChange={setToAccountId}
@@ -355,7 +358,7 @@ const TransactionModal: React.FC = () => {
 
                 {type !== 'TRANSFER' && (
                     <div className="animate-fade-in">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tags (Multiple)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('tags_multi')}</label>
                         <div className="p-3 border border-slate-200 rounded-xl bg-slate-50 min-h-[100px] flex flex-col">
                             <div className="flex flex-wrap gap-2 mb-3">
                                 {categories.map(cat => (
@@ -378,7 +381,7 @@ const TransactionModal: React.FC = () => {
                                     type="text"
                                     value={newTagInput}
                                     onChange={(e) => setNewTagInput(e.target.value)}
-                                    placeholder="New tag..."
+                                    placeholder={t('new_tag_ph')}
                                     className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-blue-500 bg-white transition-colors"
                                 />
                                 <button 
@@ -386,7 +389,7 @@ const TransactionModal: React.FC = () => {
                                     onClick={handleAddNewTag}
                                     className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium text-sm transition-colors active:scale-95 duration-200"
                                 >
-                                    Add
+                                    {t('add')}
                                 </button>
                             </div>
                         </div>
@@ -394,13 +397,13 @@ const TransactionModal: React.FC = () => {
                 )}
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc_opt')}</label>
                     <input
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-300 focus:shadow-sm"
-                        placeholder="What was this for?"
+                        placeholder={t('desc_ph')}
                     />
                 </div>
 
@@ -410,13 +413,13 @@ const TransactionModal: React.FC = () => {
                         onClick={() => setTransactionModalOpen(false)}
                         className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors active:scale-95 duration-200"
                     >
-                        Cancel
+                        {t('cancel')}
                     </button>
                     <button
                         type="submit"
                         className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-200 active:scale-95 duration-200"
                     >
-                        Save
+                        {t('save')}
                     </button>
                 </div>
             </form>

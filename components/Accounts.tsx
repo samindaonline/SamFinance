@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, Trash2, Wallet, User, Building, Edit2, CreditCard, Landmark, Check, AlertTriangle, ChevronDown, Layers, X, AlignLeft } from 'lucide-react';
 import { COLORS, DEFAULT_ACCOUNTS } from '../constants';
 import { Account } from '../types';
@@ -24,6 +25,7 @@ interface AccountItemProps {
 
 const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, level = 0 }) => {
   const { accounts, getAccountBalance, formatCurrency } = useFinance();
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false); // Collapsed by default for accordion effect
   
   const children = accounts.filter(a => a.parentAccountId === account.id);
@@ -70,7 +72,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
                 <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">
                     <div className="text-right">
                          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-0.5 hidden sm:block">
-                            {children.length > 0 ? 'Total Balance' : 'Current Balance'}
+                            {children.length > 0 ? t('total_balance') : t('current_balance')}
                         </p>
                         <p className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${currentBalance < 0 ? 'text-rose-600' : 'text-slate-800'}`}>
                             {formatCurrency(currentBalance)}
@@ -215,6 +217,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, onEdit, onDelete, le
 
 const Accounts: React.FC = () => {
   const { accounts, addAccount, updateAccount, deleteAccount } = useFinance();
+  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -309,15 +312,15 @@ const Accounts: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-up">
         <div>
-           <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Accounts</h2>
-           <p className="text-slate-500 mt-1">Manage all your financial buckets in one place.</p>
+           <h2 className="text-3xl font-bold text-slate-800 tracking-tight">{t('acc_title')}</h2>
+           <p className="text-slate-500 mt-1">{t('acc_subtitle')}</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 font-semibold active:scale-95 duration-200"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Account
+          {t('add_account')}
         </button>
       </div>
 
@@ -333,13 +336,13 @@ const Accounts: React.FC = () => {
                 <div className="p-4 bg-white rounded-full shadow-sm mb-4">
                     <Wallet className="w-10 h-10 text-slate-300" />
                 </div>
-                <p className="text-xl font-bold text-slate-600">No accounts yet</p>
+                <p className="text-xl font-bold text-slate-600">{t('no_accounts')}</p>
                 <p className="text-base mt-2 max-w-sm text-center">Start by adding your bank accounts, cash wallets, or any other assets you want to track.</p>
                 <button 
                     onClick={() => setIsModalOpen(true)}
                     className="mt-6 text-blue-600 font-bold hover:underline"
                 >
-                    Create your first account
+                    {t('create_first')}
                 </button>
             </div>
         )}
@@ -351,7 +354,7 @@ const Accounts: React.FC = () => {
           <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm ${isModalOpen ? 'animate-fade-in' : 'animate-fade-out'}`} onClick={resetForm} />
           <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 md:p-8 overflow-y-auto max-h-[90vh] z-10 relative ${isModalOpen ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-800">{editingId ? 'Edit Account' : 'New Account'}</h3>
+                <h3 className="text-2xl font-bold text-slate-800">{editingId ? t('edit_acc') : t('new_acc')}</h3>
                 <button onClick={resetForm} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
                     <X className="w-5 h-5" />
                 </button>
@@ -359,7 +362,7 @@ const Accounts: React.FC = () => {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Account Name</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_name')}</label>
                 <input
                   required
                   type="text"
@@ -371,7 +374,7 @@ const Accounts: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -381,7 +384,7 @@ const Accounts: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Parent Account</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('parent_acc')}</label>
                 <div className="relative">
                     <Layers className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
                     <select
@@ -402,7 +405,7 @@ const Accounts: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Account Type</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('acc_type')}</label>
                     <div className="relative">
                         <select
                             value={type}
@@ -420,7 +423,7 @@ const Accounts: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Initial Balance</label>
+                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('init_balance')}</label>
                      <input
                         type="number"
                         step="0.01"
@@ -439,14 +442,14 @@ const Accounts: React.FC = () => {
                     </div>
                     <input type="checkbox" className="hidden" checked={includeInNetWorth} onChange={e => setIncludeInNetWorth(e.target.checked)} />
                     <div>
-                        <span className="text-sm font-bold text-slate-700 block">Include in Net Worth</span>
+                        <span className="text-sm font-bold text-slate-700 block">{t('include_nw')}</span>
                         <span className="text-xs text-slate-500">Uncheck this if the money doesn't belong to you.</span>
                     </div>
                 </label>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Color Tag</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('color_tag')}</label>
                 <div className="flex flex-wrap gap-3">
                     {COLORS.map(c => (
                         <button
@@ -466,13 +469,13 @@ const Accounts: React.FC = () => {
                   onClick={resetForm}
                   className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-lg shadow-blue-200 active:scale-95 duration-200"
                 >
-                  {editingId ? 'Save Changes' : 'Create Account'}
+                  {editingId ? t('save_changes') : t('create')}
                 </button>
               </div>
             </form>
@@ -489,14 +492,14 @@ const Accounts: React.FC = () => {
                     <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600 animate-pulse">
                         <AlertTriangle className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900">Delete Account?</h3>
+                    <h3 className="text-xl font-bold text-slate-900">{t('delete_confirm')}</h3>
                     <p className="text-slate-600 mt-2">
                         Are you sure you want to delete <span className="font-bold text-slate-800">{deleteConfirmation.account.name}</span>?
                     </p>
                 </div>
                 
                 <p className="text-xs text-center text-slate-500 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    This action cannot be undone. All transactions associated with this account will be lost.
+                    {t('delete_msg')}
                 </p>
 
                 <div className="flex gap-3">
@@ -504,13 +507,13 @@ const Accounts: React.FC = () => {
                         onClick={() => setDeleteConfirmation({ isOpen: false, account: null })}
                         className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
                     >
-                        Cancel
+                        {t('cancel')}
                     </button>
                     <button
                         onClick={confirmDelete}
                         className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200 active:scale-95 duration-200"
                     >
-                        Delete
+                        {t('delete')}
                     </button>
                 </div>
             </div>

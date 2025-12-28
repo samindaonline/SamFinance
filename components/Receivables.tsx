@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, RefreshCcw, Edit2 } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import { Receivable } from '../types';
@@ -7,6 +8,7 @@ import DatePicker from './DatePicker';
 
 const Receivables: React.FC = () => {
   const { receivables, accounts, addReceivable, updateReceivable, toggleReceivableStatus, deleteReceivable, formatCurrency } = useFinance();
+  const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -87,8 +89,8 @@ const Receivables: React.FC = () => {
 
   const getDateLabel = (dateStr: string) => {
       const date = parseDate(dateStr);
-      if (isPast(date) && !isToday(date)) return 'Overdue';
-      if (isToday(date)) return 'Expected Today';
+      if (isPast(date) && !isToday(date)) return t('overdue');
+      if (isToday(date)) return t('expected_today');
       return format(date, 'MMM dd');
   };
 
@@ -96,8 +98,8 @@ const Receivables: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-           <h2 className="text-2xl font-bold text-slate-800">Receivables & Income</h2>
-           <p className="text-slate-500 text-sm">Track expected future income and payments owed to you.</p>
+           <h2 className="text-2xl font-bold text-slate-800">{t('rec_title')}</h2>
+           <p className="text-slate-500 text-sm">{t('rec_subtitle')}</p>
         </div>
         {!isAdding && (
             <button
@@ -105,7 +107,7 @@ const Receivables: React.FC = () => {
             className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
             >
             <Plus className="w-5 h-5 mr-2" />
-            Add Receivable
+            {t('add_rec')}
             </button>
         )}
       </div>
@@ -113,11 +115,11 @@ const Receivables: React.FC = () => {
       {/* Add/Edit Form */}
       {isAdding && (
           <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-lg animate-in fade-in slide-in-from-top-4 duration-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">{editingId ? 'Edit Income' : 'Add Expected Income'}</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">{editingId ? t('edit_income') : t('add_income')}</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Income Name</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_name')}</label>
                           <input 
                             required
                             type="text" 
@@ -128,7 +130,7 @@ const Receivables: React.FC = () => {
                           />
                       </div>
                       <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Description <span className="text-slate-400 font-normal">(Optional)</span></label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
                           <textarea 
                             value={description}
                             onChange={e => setDescription(e.target.value)}
@@ -137,7 +139,7 @@ const Receivables: React.FC = () => {
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
                           <input 
                             required
                             type="number" 
@@ -150,36 +152,36 @@ const Receivables: React.FC = () => {
                       </div>
                       <div>
                           <DatePicker 
-                            label="Expected Date"
+                            label={t('expected_date')}
                             value={expectedDate}
                             onChange={setExpectedDate}
                             required
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Target Account</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('target_acc')}</label>
                           <select 
                             required
                             value={targetAccountId}
                             onChange={e => setTargetAccountId(e.target.value)}
                             className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                           >
-                              <option value="">Select Account...</option>
+                              <option value="">{t('select_acc')}</option>
                               {accounts.map(acc => (
                                   <option key={acc.id} value={acc.id}>{acc.name}</option>
                               ))}
                           </select>
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Income Type</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('income_type')}</label>
                           <select 
                             required
                             value={type}
                             onChange={e => setType(e.target.value as any)}
                             className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                           >
-                              <option value="ONE_TIME">One-time</option>
-                              <option value="RECURRING">Recurring</option>
+                              <option value="ONE_TIME">{t('one_time')}</option>
+                              <option value="RECURRING">{t('recurring')}</option>
                           </select>
                       </div>
                   </div>
@@ -189,13 +191,13 @@ const Receivables: React.FC = () => {
                         onClick={resetForm}
                         className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
                       >
-                          Cancel
+                          {t('cancel')}
                       </button>
                       <button 
                         type="submit" 
                         className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
                       >
-                          {editingId ? 'Save Changes' : 'Save Income'}
+                          {editingId ? t('save_changes') : t('save_income')}
                       </button>
                   </div>
               </form>
@@ -206,7 +208,7 @@ const Receivables: React.FC = () => {
       <div>
           <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
               <Clock className="w-5 h-5 text-emerald-500" />
-              Pending Income
+              {t('pending_income')}
           </h3>
           <div className="space-y-3">
               {pendingReceivables.length > 0 ? (
@@ -227,7 +229,7 @@ const Receivables: React.FC = () => {
                                             <h4 className="font-bold text-slate-800 text-lg">{receivable.name}</h4>
                                             {receivable.type === 'RECURRING' && (
                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-600 flex items-center">
-                                                    <RefreshCcw className="w-3 h-3 mr-1" /> Recurring
+                                                    <RefreshCcw className="w-3 h-3 mr-1" /> {t('recurring')}
                                                 </span>
                                             )}
                                         </div>
@@ -235,14 +237,14 @@ const Receivables: React.FC = () => {
                                             <p className="text-sm text-slate-500 mb-1">{receivable.description}</p>
                                         )}
                                         <div className="flex items-center text-sm text-slate-500 mt-1">
-                                            <span>To:</span>
+                                            <span>{t('to')}</span>
                                             <span className="ml-1 font-medium text-slate-700 flex items-center">
                                                 {account ? (
                                                     <>
                                                         <div className="w-2 h-2 rounded-full mr-1.5" style={{backgroundColor: account.color}} />
                                                         {account.name}
                                                     </>
-                                                ) : 'Unknown Account'}
+                                                ) : t('unknown')}
                                             </span>
                                         </div>
                                     </div>
@@ -266,7 +268,7 @@ const Receivables: React.FC = () => {
                                         <button 
                                             onClick={() => toggleReceivableStatus(receivable.id)}
                                             className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors"
-                                            title="Mark as Received"
+                                            title={t('mark_received')}
                                         >
                                             <Check className="w-5 h-5" />
                                         </button>
@@ -285,7 +287,7 @@ const Receivables: React.FC = () => {
                   })
               ) : (
                   <div className="bg-slate-50 rounded-xl p-8 text-center border border-dashed border-slate-200">
-                      <p className="text-slate-400 font-medium">No pending income. Add upcoming payments!</p>
+                      <p className="text-slate-400 font-medium">{t('no_pending_rec')}</p>
                   </div>
               )}
           </div>
@@ -296,7 +298,7 @@ const Receivables: React.FC = () => {
           <div className="pt-6">
               <h3 className="text-lg font-bold text-slate-700 mb-3 flex items-center gap-2 opacity-75">
                   <Check className="w-5 h-5 text-emerald-500" />
-                  Received History
+                  {t('received_history')}
               </h3>
               <div className="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
                   {receivedReceivables.map(receivable => {
@@ -326,7 +328,7 @@ const Receivables: React.FC = () => {
                                     onClick={() => toggleReceivableStatus(receivable.id)}
                                     className="text-xs text-blue-600 hover:underline"
                                 >
-                                    Undo
+                                    {t('undo')}
                                 </button>
                                 <button 
                                     onClick={() => deleteReceivable(receivable.id)}

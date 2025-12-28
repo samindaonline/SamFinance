@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import DatePicker from './DatePicker';
 
 const Liabilities: React.FC = () => {
   const { liabilities, accounts, addLiability, toggleLiabilityStatus, deleteLiability, formatCurrency } = useFinance();
+  const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   
   // Form State
@@ -56,8 +58,8 @@ const Liabilities: React.FC = () => {
 
   const getDueDateLabel = (dateStr: string) => {
       const date = parseDate(dateStr);
-      if (isPast(date) && !isToday(date)) return 'Overdue';
-      if (isToday(date)) return 'Due Today';
+      if (isPast(date) && !isToday(date)) return t('overdue');
+      if (isToday(date)) return t('due_today');
       return format(date, 'MMM dd');
   };
 
@@ -65,26 +67,26 @@ const Liabilities: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-           <h2 className="text-2xl font-bold text-slate-800">Liabilities & Bills</h2>
-           <p className="text-slate-500 text-sm">Track upcoming payments and debts without affecting your net worth.</p>
+           <h2 className="text-2xl font-bold text-slate-800">{t('liab_title')}</h2>
+           <p className="text-slate-500 text-sm">{t('liab_subtitle')}</p>
         </div>
         <button
           onClick={() => setIsAdding(true)}
           className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-100"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Liability
+          {t('add_liab')}
         </button>
       </div>
 
       {/* Add Form */}
       {isAdding && (
           <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-lg animate-in fade-in slide-in-from-top-4 duration-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Add New Liability</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">{t('new_liab')}</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Liability Name</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('liab_name')}</label>
                           <input 
                             required
                             type="text" 
@@ -95,7 +97,7 @@ const Liabilities: React.FC = () => {
                           />
                       </div>
                       <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Description <span className="text-slate-400 font-normal">(Optional)</span></label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('desc')} <span className="text-slate-400 font-normal">(Optional)</span></label>
                           <textarea 
                             value={description}
                             onChange={e => setDescription(e.target.value)}
@@ -104,7 +106,7 @@ const Liabilities: React.FC = () => {
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
                           <input 
                             required
                             type="number" 
@@ -117,21 +119,21 @@ const Liabilities: React.FC = () => {
                       </div>
                       <div>
                           <DatePicker 
-                            label="Due Date"
+                            label={t('due_date')}
                             value={dueDate}
                             onChange={setDueDate}
                             required
                           />
                       </div>
                       <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Payment Source (Account)</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">{t('payment_source')}</label>
                           <select 
                             required
                             value={paymentAccountId}
                             onChange={e => setPaymentAccountId(e.target.value)}
                             className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                           >
-                              <option value="">Select Account...</option>
+                              <option value="">{t('select_acc')}</option>
                               {accounts.map(acc => (
                                   <option key={acc.id} value={acc.id}>{acc.name}</option>
                               ))}
@@ -144,13 +146,13 @@ const Liabilities: React.FC = () => {
                         onClick={resetForm}
                         className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors"
                       >
-                          Cancel
+                          {t('cancel')}
                       </button>
                       <button 
                         type="submit" 
                         className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
                       >
-                          Save Liability
+                          {t('save_liab')}
                       </button>
                   </div>
               </form>
@@ -161,7 +163,7 @@ const Liabilities: React.FC = () => {
       <div>
           <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
               <Clock className="w-5 h-5 text-amber-500" />
-              Pending
+              {t('pending')}
           </h3>
           <div className="space-y-3">
               {pendingLiabilities.length > 0 ? (
@@ -183,14 +185,14 @@ const Liabilities: React.FC = () => {
                                             <p className="text-sm text-slate-500 mb-1">{liability.description}</p>
                                         )}
                                         <div className="flex items-center text-sm text-slate-500 mt-1">
-                                            <span>Pay via:</span>
+                                            <span>{t('pay_via')}</span>
                                             <span className="ml-1 font-medium text-slate-700 flex items-center">
                                                 {account ? (
                                                     <>
                                                         <div className="w-2 h-2 rounded-full mr-1.5" style={{backgroundColor: account.color}} />
                                                         {account.name}
                                                     </>
-                                                ) : 'Unknown Account'}
+                                                ) : t('unknown')}
                                             </span>
                                         </div>
                                     </div>
@@ -207,7 +209,7 @@ const Liabilities: React.FC = () => {
                                         <button 
                                             onClick={() => toggleLiabilityStatus(liability.id)}
                                             className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                            title="Mark as Paid"
+                                            title={t('mark_paid')}
                                         >
                                             <Check className="w-5 h-5" />
                                         </button>
@@ -226,7 +228,7 @@ const Liabilities: React.FC = () => {
                   })
               ) : (
                   <div className="bg-slate-50 rounded-xl p-8 text-center border border-dashed border-slate-200">
-                      <p className="text-slate-400 font-medium">No pending liabilities. You're all clear!</p>
+                      <p className="text-slate-400 font-medium">{t('no_pending_liab')}</p>
                   </div>
               )}
           </div>
@@ -237,7 +239,7 @@ const Liabilities: React.FC = () => {
           <div className="pt-6">
               <h3 className="text-lg font-bold text-slate-700 mb-3 flex items-center gap-2 opacity-75">
                   <Check className="w-5 h-5 text-emerald-500" />
-                  Paid History
+                  {t('paid_history')}
               </h3>
               <div className="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
                   {paidLiabilities.map(liability => {
@@ -251,7 +253,7 @@ const Liabilities: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-slate-700 decoration-slate-400 line-through decoration-2">{liability.name}</h4>
                                     <div className="text-xs text-slate-400">
-                                        Due: {format(parseDate(liability.dueDate), 'MMM dd, yyyy')} • {account?.name}
+                                        {t('due')}: {format(parseDate(liability.dueDate), 'MMM dd, yyyy')} • {account?.name}
                                     </div>
                                 </div>
                             </div>
@@ -261,7 +263,7 @@ const Liabilities: React.FC = () => {
                                     onClick={() => toggleLiabilityStatus(liability.id)}
                                     className="text-xs text-blue-600 hover:underline"
                                 >
-                                    Undo
+                                    {t('undo')}
                                 </button>
                                 <button 
                                     onClick={() => deleteLiability(liability.id)}

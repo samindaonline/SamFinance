@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { CURRENCIES } from '../constants';
-import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal, ChevronDown } from 'lucide-react';
+import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal, ChevronDown, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Settings: React.FC = () => {
   const { currency, setCurrency, accounts, transactions, categories, liabilities, receivables, budgetProjects, importData, resetData } = useFinance();
+  const { t, language, setLanguage } = useLanguage();
 
   const [isExporting, setIsExporting] = useState(false);
   
@@ -104,8 +106,46 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
-        <p className="text-slate-500">Configure application preferences.</p>
+        <h2 className="text-2xl font-bold text-slate-800">{t('settings_title')}</h2>
+        <p className="text-slate-500">{t('settings_sub')}</p>
+      </div>
+
+      {/* Language Setting */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100">
+             <div className="flex items-center gap-3 mb-2">
+                 <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                     <Globe className="w-5 h-5" />
+                 </div>
+                 <h3 className="text-lg font-bold text-slate-800">{t('language')}</h3>
+             </div>
+             <p className="text-slate-500 text-sm">{t('language_desc')}</p>
+        </div>
+        
+        <div className="p-6">
+            <div className="grid grid-cols-2 gap-4 max-w-md">
+                <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex items-center justify-center px-4 py-3 rounded-xl border font-medium transition-all ${
+                        language === 'en' 
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-500' 
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                    English
+                </button>
+                <button
+                    onClick={() => setLanguage('si')}
+                    className={`flex items-center justify-center px-4 py-3 rounded-xl border font-medium transition-all font-sans ${
+                        language === 'si' 
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-500' 
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                    සිංහල
+                </button>
+            </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -114,9 +154,9 @@ const Settings: React.FC = () => {
                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                      <Coins className="w-5 h-5" />
                  </div>
-                 <h3 className="text-lg font-bold text-slate-800">Currency</h3>
+                 <h3 className="text-lg font-bold text-slate-800">{t('currency')}</h3>
              </div>
-             <p className="text-slate-500 text-sm">Select the default currency for displaying monetary values across the application.</p>
+             <p className="text-slate-500 text-sm">{t('currency_desc')}</p>
         </div>
         
         <div className="p-6">
@@ -148,9 +188,9 @@ const Settings: React.FC = () => {
                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                      <FileJson className="w-5 h-5" />
                  </div>
-                 <h3 className="text-lg font-bold text-slate-800">Backup & Restore</h3>
+                 <h3 className="text-lg font-bold text-slate-800">{t('backup')}</h3>
              </div>
-             <p className="text-slate-500 text-sm">Export your data to a JSON file or paste a backup code to restore.</p>
+             <p className="text-slate-500 text-sm">{t('backup_desc')}</p>
         </div>
         
         <div className="p-6">
@@ -165,7 +205,7 @@ const Settings: React.FC = () => {
                     ) : (
                         <Download className="w-5 h-5 mr-2 text-blue-600" />
                     )}
-                    {isExporting ? 'Exporting...' : 'Export Data'}
+                    {isExporting ? 'Exporting...' : t('export')}
                 </button>
                 
                 <button 
@@ -174,7 +214,7 @@ const Settings: React.FC = () => {
                     className="flex-1 flex items-center justify-center px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all font-medium shadow-sm disabled:opacity-50"
                 >
                     <Upload className="w-5 h-5 mr-2 text-emerald-600" />
-                    Import Data
+                    {t('import')}
                 </button>
             </div>
              <p className="mt-3 text-xs text-slate-400 text-center sm:text-left">
@@ -189,9 +229,9 @@ const Settings: React.FC = () => {
                  <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
                      <AlertTriangle className="w-5 h-5" />
                  </div>
-                 <h3 className="text-lg font-bold text-slate-800">Danger Zone</h3>
+                 <h3 className="text-lg font-bold text-slate-800">{t('danger_zone')}</h3>
              </div>
-             <p className="text-slate-500 text-sm">Irreversible actions regarding your data.</p>
+             <p className="text-slate-500 text-sm">{t('danger_desc')}</p>
         </div>
         
         <div className="p-6">
@@ -201,18 +241,18 @@ const Settings: React.FC = () => {
                     className="w-full sm:w-auto px-6 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all font-medium shadow-sm flex items-center justify-center"
                 >
                     <Trash2 className="w-5 h-5 mr-2" />
-                    Reset All Data
+                    {t('reset_data')}
                 </button>
             ) : (
                 <div className="bg-rose-50 p-4 rounded-xl border border-rose-100 animate-in fade-in slide-in-from-top-2">
-                    <p className="font-bold text-rose-800 mb-2">Are you absolutely sure?</p>
-                    <p className="text-sm text-rose-700 mb-4">This will delete all accounts, transactions, and settings. This action cannot be undone.</p>
+                    <p className="font-bold text-rose-800 mb-2">{t('reset_confirm')}</p>
+                    <p className="text-sm text-rose-700 mb-4">{t('reset_msg')}</p>
                     <div className="flex gap-3">
                         <button 
                             onClick={() => setShowResetConfirm(false)}
                             className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium text-sm"
                         >
-                            Cancel
+                            {t('cancel')}
                         </button>
                         <button 
                             onClick={handleReset}
@@ -220,7 +260,7 @@ const Settings: React.FC = () => {
                             className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-medium text-sm shadow-sm flex items-center"
                         >
                             {isResetting && <Loader2 className="w-3 h-3 mr-2 animate-spin" />}
-                            {isResetting ? 'Resetting...' : 'Yes, Delete Everything'}
+                            {isResetting ? 'Resetting...' : t('yes_delete')}
                         </button>
                     </div>
                 </div>
@@ -238,7 +278,7 @@ const Settings: React.FC = () => {
                                 <Terminal className="w-5 h-5" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-slate-800">Import Data</h3>
+                            <h3 className="text-lg font-bold text-slate-800">{t('import_title')}</h3>
                             <p className="text-xs text-slate-500">Paste your JSON backup code below.</p>
                           </div>
                       </div>
@@ -268,7 +308,7 @@ const Settings: React.FC = () => {
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                 <div className="text-slate-500 flex flex-col items-center">
                                     <FileJson className="w-8 h-8 mb-2 opacity-50" />
-                                    <span className="text-sm">Paste JSON here</span>
+                                    <span className="text-sm">{t('paste_json')}</span>
                                 </div>
                             </div>
                         )}
@@ -287,7 +327,7 @@ const Settings: React.FC = () => {
                             onClick={() => { setShowImportModal(false); setImportJson(''); setPasteError(null); }}
                             className="px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl font-medium transition-all"
                         >
-                            Cancel
+                            {t('cancel')}
                         </button>
                         <button 
                             onClick={handleImportSubmit}
@@ -301,7 +341,7 @@ const Settings: React.FC = () => {
                             {importStatus === 'processing' ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Processing...
+                                    {t('loading')}
                                 </>
                             ) : importStatus === 'success' ? (
                                 <>
@@ -311,7 +351,7 @@ const Settings: React.FC = () => {
                             ) : (
                                 <>
                                     <Upload className="w-4 h-4 mr-2" />
-                                    Import & Merge
+                                    {t('import_merge')}
                                 </>
                             )}
                         </button>

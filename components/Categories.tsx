@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, X, Tag, Search } from 'lucide-react';
 
 const Categories: React.FC = () => {
   const { categories, addCategory, removeCategory } = useFinance();
+  const { t } = useLanguage();
   const [newCategory, setNewCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,15 +25,15 @@ const Categories: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-           <h2 className="text-2xl font-bold text-slate-800">Tags / Categories</h2>
-           <p className="text-slate-500">Manage transaction tags to organize your spending.</p>
+           <h2 className="text-2xl font-bold text-slate-800">{t('cat_title')}</h2>
+           <p className="text-slate-500">{t('cat_subtitle')}</p>
         </div>
       </div>
 
       <div className="space-y-6">
         {/* Add Category Section */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Add New Tag</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">{t('add_new_tag')}</h3>
             <form onSubmit={handleAdd} className="flex gap-2 max-w-xl">
                 <div className="relative flex-1">
                     <Tag className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
@@ -48,7 +50,7 @@ const Categories: React.FC = () => {
                     type="submit"
                     className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition-colors font-medium flex items-center"
                 >
-                    <Plus className="w-5 h-5 mr-2" /> Add
+                    <Plus className="w-5 h-5 mr-2" /> {t('add')}
                 </button>
             </form>
         </div>
@@ -56,12 +58,12 @@ const Categories: React.FC = () => {
         {/* Categories Tag Cloud */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm min-h-[400px]">
              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-800">Existing Tags</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t('existing_tags')}</h3>
                 <div className="relative w-64">
                     <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                     <input 
                         type="text" 
-                        placeholder="Filter tags..." 
+                        placeholder={t('filter_tags')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
@@ -79,7 +81,7 @@ const Categories: React.FC = () => {
                             <span>{category}</span>
                             <button 
                                 onClick={() => {
-                                    if(confirm(`Remove tag "${category}"?`)) removeCategory(category);
+                                    if(confirm(`${t('remove_tag_confirm')} "${category}"?`)) removeCategory(category);
                                 }}
                                 className="ml-2 p-0.5 rounded-full text-slate-400 hover:bg-red-100 hover:text-red-500 transition-colors"
                             >
@@ -90,7 +92,7 @@ const Categories: React.FC = () => {
                 ) : (
                     <div className="w-full py-12 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-xl">
                         <Tag className="w-8 h-8 mb-2 opacity-50" />
-                        <p>No tags found matching "{searchTerm}"</p>
+                        <p>{t('no_tags_found')} "{searchTerm}"</p>
                     </div>
                 )}
              </div>

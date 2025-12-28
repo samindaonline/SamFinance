@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FinanceProvider } from './context/FinanceContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Accounts from './components/Accounts';
@@ -39,11 +40,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <FinanceProvider>
-      <Layout currentView={currentView} setView={setCurrentView}>
-        {renderView()}
-      </Layout>
-    </FinanceProvider>
+    <LanguageProvider>
+      <FinanceProvider>
+        <Layout currentView={currentView} setView={setCurrentView}>
+          {renderView()}
+        </Layout>
+      </FinanceProvider>
+    </LanguageProvider>
   );
 };
 

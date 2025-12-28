@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, ScrollText, ChevronRight, HandCoins, Calculator } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, ScrollText, ChevronRight, HandCoins, Calculator, Globe } from 'lucide-react';
 import TransactionModal from './TransactionModal';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,21 +11,26 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { t, language, setLanguage } = useLanguage();
 
   const navItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'accounts', icon: Wallet, label: 'Accounts' },
-    { id: 'transactions', icon: CreditCard, label: 'Transactions' },
-    { id: 'receivables', icon: HandCoins, label: 'Receivables' },
-    { id: 'liabilities', icon: ScrollText, label: 'Liabilities' },
-    { id: 'budget', icon: Calculator, label: 'Budget Forecasts' },
-    { id: 'categories', icon: Tags, label: 'Categories' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'dashboard', icon: LayoutDashboard, label: t('nav_dashboard') },
+    { id: 'accounts', icon: Wallet, label: t('nav_accounts') },
+    { id: 'transactions', icon: CreditCard, label: t('nav_transactions') },
+    { id: 'receivables', icon: HandCoins, label: t('nav_receivables') },
+    { id: 'liabilities', icon: ScrollText, label: t('nav_liabilities') },
+    { id: 'budget', icon: Calculator, label: t('nav_budget') },
+    { id: 'categories', icon: Tags, label: t('nav_categories') },
+    { id: 'settings', icon: Settings, label: t('nav_settings') },
   ] as const;
 
-  const handleNavClick = (view: typeof currentView) => {
+  const handleNavClick = (view: any) => {
     setView(view);
     setSidebarOpen(false);
+  };
+
+  const toggleLanguage = () => {
+      setLanguage(language === 'en' ? 'si' : 'en');
   };
 
   return (
@@ -47,9 +53,16 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
              </div>
          </div>
 
-         <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200">
-                Local Vault
+         <div className="flex items-center gap-3">
+            <button 
+                onClick={toggleLanguage}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors font-medium text-sm active:scale-95 duration-200"
+            >
+                <Globe className="w-4 h-4" />
+                <span className="uppercase">{language}</span>
+            </button>
+            <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200 hidden sm:inline-block">
+                {t('local_vault')}
             </span>
          </div>
       </header>
@@ -82,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
                   {navItems.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => handleNavClick(item.id as any)}
+                        onClick={() => handleNavClick(item.id)}
                         className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group ${
                             currentView === item.id
                                 ? 'bg-blue-50 text-blue-700 font-semibold shadow-sm'
@@ -100,9 +113,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
 
               <div className="p-4 border-t border-slate-100 bg-slate-50/50">
                   <div className="bg-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-shadow">
-                      <h4 className="font-bold text-sm mb-1">Secure & Local</h4>
+                      <h4 className="font-bold text-sm mb-1">{t('secure_local')}</h4>
                       <p className="text-xs text-blue-100 leading-relaxed">
-                          Your financial data never leaves this device. 
+                          {t('secure_msg')}
                       </p>
                   </div>
               </div>

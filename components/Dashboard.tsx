@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ArrowUpRight, ArrowDownRight, Activity, Wallet, PieChart as PieIcon, Plus, Calendar, TrendingUp, ScrollText, X, ChevronRight, HandCoins } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
 import { format, isAfter, endOfMonth, addMonths, isSameDay } from 'date-fns';
@@ -12,6 +13,7 @@ const parseDate = (dateStr: string) => {
 
 const Dashboard: React.FC = () => {
   const { transactions, liabilities, receivables, totalNetWorth, getAccountBalance, accounts, setTransactionModalOpen, formatCurrency } = useFinance();
+  const { t } = useLanguage();
   
   const [netWorthRange, setNetWorthRange] = useState<'3M' | '6M' | '1Y'>('6M');
   const [showLiabilityModal, setShowLiabilityModal] = useState(false);
@@ -287,8 +289,8 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
         <div className="animate-slide-up">
-            <h2 className="text-2xl font-bold text-slate-800">Financial Overview</h2>
-            <p className="text-slate-500 text-sm">Here is what's happening with your money.</p>
+            <h2 className="text-2xl font-bold text-slate-800">{t('dash_title')}</h2>
+            <p className="text-slate-500 text-sm">{t('dash_subtitle')}</p>
         </div>
         
         {/* Actions */}
@@ -298,7 +300,7 @@ const Dashboard: React.FC = () => {
                 className="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm font-medium w-full sm:w-auto active:scale-95 duration-200"
             >
                 <Plus className="w-5 h-5 mr-2" />
-                Add Transaction
+                {t('add_transaction')}
             </button>
         </div>
       </div>
@@ -308,7 +310,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '100ms' }}>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500 mb-1">Total Net Worth</p>
+              <p className="text-sm font-medium text-slate-500 mb-1">{t('net_worth')}</p>
               <h3 className="text-2xl lg:text-3xl font-bold text-slate-800 break-all">{formatCurrency(totalNetWorth)}</h3>
             </div>
             <div className="p-3 bg-blue-50 rounded-xl shrink-0">
@@ -320,7 +322,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '150ms' }}>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500 mb-1">Income (Mo)</p>
+              <p className="text-sm font-medium text-slate-500 mb-1">{t('income_mo')}</p>
               <h3 className="text-2xl lg:text-3xl font-bold text-emerald-600 break-all">+{formatCurrency(income)}</h3>
             </div>
             <div className="p-3 bg-emerald-50 rounded-xl shrink-0">
@@ -332,7 +334,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500 mb-1">Expenses (Mo)</p>
+              <p className="text-sm font-medium text-slate-500 mb-1">{t('expense_mo')}</p>
               <h3 className="text-2xl lg:text-3xl font-bold text-rose-600 break-all">-{formatCurrency(expenses)}</h3>
             </div>
             <div className="p-3 bg-rose-50 rounded-xl shrink-0">
@@ -347,7 +349,7 @@ const Dashboard: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h3 className="text-lg font-bold text-slate-800 flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2 text-slate-400" /> 
-                Net Worth Trend
+                {t('net_worth_trend')}
             </h3>
             <div className="flex bg-slate-100 rounded-lg p-1">
                 {(['3M', '6M', '1Y'] as const).map(range => (
@@ -413,7 +415,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '300ms' }}>
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
             <Activity className="w-4 h-4 mr-2 text-slate-400" /> 
-            Income vs Expenses (Last 30 Days)
+            {t('activity_chart')}
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -445,7 +447,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '350ms' }}>
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
                 <PieIcon className="w-4 h-4 mr-2 text-slate-400" /> 
-                Expenses by Tag (Last 30 Days)
+                {t('expense_tags')}
             </h3>
             <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -481,13 +483,13 @@ const Dashboard: React.FC = () => {
                           <HandCoins className="w-5 h-5" />
                       </div>
                       <div>
-                          <h3 className="font-bold text-slate-800">Upcoming Income</h3>
+                          <h3 className="font-bold text-slate-800">{t('upcoming_income')}</h3>
                           <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
                       </div>
                   </div>
                   <div className="text-right">
                       <div className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</div>
-                      <div className="text-xs text-slate-500 font-medium">Total Expected</div>
+                      <div className="text-xs text-slate-500 font-medium">{t('total_expected')}</div>
                   </div>
               </div>
               
@@ -515,7 +517,7 @@ const Dashboard: React.FC = () => {
                                   onClick={() => setShowReceivableModal(true)}
                                   className="w-full py-2 mt-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
                               >
-                                  Read More ({receivableForecast.length - 3} more)
+                                  {t('read_more')} ({receivableForecast.length - 3} more)
                               </button>
                           )}
                           
@@ -524,13 +526,13 @@ const Dashboard: React.FC = () => {
                                 onClick={() => setShowReceivableModal(true)}
                                 className="w-full text-xs text-slate-400 hover:text-emerald-600 mt-1 flex items-center justify-center gap-1 transition-colors"
                               >
-                                View All Details <ChevronRight className="w-3 h-3" />
+                                {t('view_details')} <ChevronRight className="w-3 h-3" />
                               </button>
                           )}
                       </div>
                   ) : (
                       <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                          No expected income in the next 3 months.
+                          {t('no_data')}
                       </div>
                   )}
               </div>
@@ -544,13 +546,13 @@ const Dashboard: React.FC = () => {
                           <ScrollText className="w-5 h-5" />
                       </div>
                       <div>
-                          <h3 className="font-bold text-slate-800">Upcoming Liabilities</h3>
+                          <h3 className="font-bold text-slate-800">{t('upcoming_liabilities')}</h3>
                           <p className="text-xs text-slate-500">Next 3 Months Forecast</p>
                       </div>
                   </div>
                   <div className="text-right">
                       <div className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</div>
-                      <div className="text-xs text-slate-500 font-medium">Total Pending</div>
+                      <div className="text-xs text-slate-500 font-medium">{t('total_pending')}</div>
                   </div>
               </div>
               
@@ -578,7 +580,7 @@ const Dashboard: React.FC = () => {
                                   onClick={() => setShowLiabilityModal(true)}
                                   className="w-full py-2 mt-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center active:scale-95 duration-200"
                               >
-                                  Read More ({liabilityForecast.length - 3} more)
+                                  {t('read_more')} ({liabilityForecast.length - 3} more)
                               </button>
                           )}
                           
@@ -587,13 +589,13 @@ const Dashboard: React.FC = () => {
                                 onClick={() => setShowLiabilityModal(true)}
                                 className="w-full text-xs text-slate-400 hover:text-blue-600 mt-1 flex items-center justify-center gap-1 transition-colors"
                               >
-                                View All Details <ChevronRight className="w-3 h-3" />
+                                {t('view_details')} <ChevronRight className="w-3 h-3" />
                               </button>
                           )}
                       </div>
                   ) : (
                       <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                          No liabilities due in the next 3 months.
+                          {t('no_data')}
                       </div>
                   )}
               </div>
@@ -605,7 +607,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
              <div className="flex items-center gap-2">
                  <Calendar className="w-5 h-5 text-slate-500" />
-                 <h3 className="text-lg font-bold text-slate-800">Expenses by Date (Last 30 Days)</h3>
+                 <h3 className="text-lg font-bold text-slate-800">{t('expense_list')}</h3>
              </div>
           </div>
           
@@ -651,7 +653,7 @@ const Dashboard: React.FC = () => {
                  ))
              ) : (
                  <div className="p-12 text-center text-slate-400 text-sm">
-                     No expenses found for the last 30 days.
+                     {t('no_data')}
                  </div>
              )}
           </div>
@@ -661,7 +663,7 @@ const Dashboard: React.FC = () => {
       <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm animate-slide-up" style={{ animationDelay: '550ms' }}>
            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
             <Wallet className="w-4 h-4 mr-2 text-slate-400" />
-            Assets Distribution
+            {t('asset_dist')}
            </h3>
            <div className="h-64">
             {assetData.length > 0 ? (
@@ -687,7 +689,7 @@ const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-full text-slate-400">
-                No positive balances to display
+                {t('no_data')}
               </div>
             )}
            </div>
@@ -700,7 +702,7 @@ const Dashboard: React.FC = () => {
               <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showLiabilityModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
                       <div>
-                          <h3 className="text-xl font-bold text-slate-800">Liabilities Forecast</h3>
+                          <h3 className="text-xl font-bold text-slate-800">{t('upcoming_liabilities')}</h3>
                           <p className="text-sm text-slate-500">Upcoming payments for the next 3 months.</p>
                       </div>
                       <button onClick={() => setShowLiabilityModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
@@ -741,7 +743,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
-                      <span className="font-medium text-slate-500">Total Forecast</span>
+                      <span className="font-medium text-slate-500">{t('total_expected')}</span>
                       <span className="text-xl font-bold text-rose-600">-{formatCurrency(totalForecastLiability)}</span>
                   </div>
               </div>
@@ -755,7 +757,7 @@ const Dashboard: React.FC = () => {
               <div className={`bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] z-10 relative ${showReceivableModal ? 'animate-zoom-in' : 'animate-zoom-out'}`}>
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
                       <div>
-                          <h3 className="text-xl font-bold text-slate-800">Income Forecast</h3>
+                          <h3 className="text-xl font-bold text-slate-800">{t('upcoming_income')}</h3>
                           <p className="text-sm text-slate-500">Upcoming expected income for the next 3 months.</p>
                       </div>
                       <button onClick={() => setShowReceivableModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors active:scale-90 duration-200">
@@ -796,7 +798,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
-                      <span className="font-medium text-slate-500">Total Forecast</span>
+                      <span className="font-medium text-slate-500">{t('total_expected')}</span>
                       <span className="text-xl font-bold text-emerald-600">+{formatCurrency(totalForecastReceivable)}</span>
                   </div>
               </div>
