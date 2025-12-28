@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Search, Filter, Trash2, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Calendar, User, Tag } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Calendar, User, Tag, Info } from 'lucide-react';
 import { format } from 'date-fns';
+import HelpModal from './HelpModal';
 
 const Transactions: React.FC = () => {
   const { transactions, accounts, deleteTransaction, setTransactionModalOpen, formatCurrency } = useFinance();
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => 
@@ -19,9 +21,18 @@ const Transactions: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-0 h-full flex flex-col">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
-        <div>
-           <h2 className="text-2xl font-bold text-slate-800">{t('tx_title')}</h2>
-           <p className="text-slate-500 text-sm">{t('tx_subtitle')}</p>
+        <div className="flex items-start gap-3">
+           <div>
+               <h2 className="text-2xl font-bold text-slate-800">{t('tx_title')}</h2>
+               <p className="text-slate-500 text-sm">{t('tx_subtitle')}</p>
+           </div>
+           <button 
+                onClick={() => setShowHelp(true)}
+                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors mt-1"
+                title="Help Guide"
+            >
+                <Info className="w-5 h-5" />
+            </button>
         </div>
         <button
           onClick={() => setTransactionModalOpen(true)}
@@ -51,6 +62,14 @@ const Transactions: React.FC = () => {
             )}
           </div>
       </div>
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        titleKey="help_tx_title"
+        contentKey="help_tx_steps"
+      />
 
       {/* Desktop Table View */}
       <div className="hidden md:flex flex-col flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

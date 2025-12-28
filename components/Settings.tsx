@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { CURRENCIES } from '../constants';
-import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal, ChevronDown, Globe } from 'lucide-react';
+import { Coins, Check, Download, Upload, FileJson, Trash2, AlertTriangle, Loader2, X, Terminal, ChevronDown, Globe, Info } from 'lucide-react';
 import { format } from 'date-fns';
+import HelpModal from './HelpModal';
 
 const Settings: React.FC = () => {
   const { currency, setCurrency, accounts, transactions, categories, liabilities, receivables, budgetProjects, importData, resetData } = useFinance();
@@ -23,6 +24,9 @@ const Settings: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
+
+  // Help Modal State
+  const [showBackupHelp, setShowBackupHelp] = useState(false);
 
   const handleExport = () => {
     setIsExporting(true);
@@ -183,12 +187,21 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-             <div className="flex items-center gap-3 mb-2">
-                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                     <FileJson className="w-5 h-5" />
+        <div className="p-6 border-b border-slate-100 relative">
+             <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-3 mb-2">
+                     <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                         <FileJson className="w-5 h-5" />
+                     </div>
+                     <h3 className="text-lg font-bold text-slate-800">{t('backup')}</h3>
                  </div>
-                 <h3 className="text-lg font-bold text-slate-800">{t('backup')}</h3>
+                 <button 
+                    onClick={() => setShowBackupHelp(true)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="How to backup"
+                 >
+                     <Info className="w-5 h-5" />
+                 </button>
              </div>
              <p className="text-slate-500 text-sm">{t('backup_desc')}</p>
         </div>
@@ -273,6 +286,14 @@ const Settings: React.FC = () => {
           <p className="text-sm font-medium">SamFinance v1.0.0</p>
           <p className="text-xs mt-1">© {new Date().getFullYear()} Saminda Lakshan. All rights reserved.</p>
       </div>
+
+      {/* Backup Help Modal */}
+      <HelpModal 
+        isOpen={showBackupHelp}
+        onClose={() => setShowBackupHelp(false)}
+        titleKey="help_backup_title"
+        contentKey="help_backup_steps"
+      />
 
       {/* Import Modal */}
       {showImportModal && createPortal(

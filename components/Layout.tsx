@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, ScrollText, ChevronRight, HandCoins, Calculator, Globe } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, Menu, X, PiggyBank, Tags, Settings, ScrollText, ChevronRight, HandCoins, Calculator, Globe, BookOpen } from 'lucide-react';
 import TransactionModal from './TransactionModal';
 import { useLanguage } from '../context/LanguageContext';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget';
-  setView: (view: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget') => void;
+  currentView: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget' | 'guides';
+  setView: (view: 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget' | 'guides') => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
@@ -21,6 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }) => {
     { id: 'liabilities', icon: ScrollText, label: t('nav_liabilities') },
     { id: 'budget', icon: Calculator, label: t('nav_budget') },
     { id: 'categories', icon: Tags, label: t('nav_categories') },
+    { id: 'guides', icon: BookOpen, label: t('nav_guides') },
     { id: 'settings', icon: Settings, label: t('nav_settings') },
   ] as const;
 

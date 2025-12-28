@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     // Navigation
@@ -9,6 +10,7 @@ export const translations = {
     nav_budget: "Budget Forecasts",
     nav_categories: "Categories",
     nav_settings: "Settings",
+    nav_guides: "User Guides",
     local_vault: "Local Vault",
     secure_local: "Secure & Local",
     secure_msg: "Your financial data never leaves this device.",
@@ -182,6 +184,10 @@ export const translations = {
     desc_opt: "Description (Optional)",
     desc_ph: "What was this for?",
     
+    // Guides Tab
+    guides_title: "User Manual",
+    guides_subtitle: "Complete documentation on how to use SamFinance.",
+    
     // Common
     paid: "Paid",
     received: "Received",
@@ -192,6 +198,26 @@ export const translations = {
     select_acc: "Select an account...",
     select_date: "Select Date",
     
+    // Help Guides (Pipe separated steps)
+    help_guide: "Page Guide",
+    help_acc_title: "How to use Accounts",
+    help_acc_steps: "Click '+ Add Account' to create new tracking buckets (Bank, Cash, Assets, etc.).|Use 'Parent Account' to create a hierarchy (e.g., nesting 'Savings' under 'Bank').|Uncheck 'Include in Net Worth' if the account money doesn't belong to you (e.g., Office Petty Cash).|Click on an account row to expand and view its sub-accounts.|Use the Edit/Delete icons to manage your accounts.",
+    
+    help_tx_title: "How to use Transactions",
+    help_tx_steps: "Click '+ Add Transaction' to record money movement.|Select 'Expense' for money leaving, 'Income' for money entering, or 'Transfer' for moving money between your accounts.|You can select multiple tags (e.g., 'Food' and 'Date Night').|Use the search bar at the top to filter transactions by description or tags.|Transactions affect your account balances immediately.",
+
+    help_rec_title: "How to use Receivables",
+    help_rec_steps: "Use this to track money that is owed to you (e.g., Salary, Dividends, Loans given).|These do NOT affect your account balance until you mark them as 'Received'.|Set the status to 'Recurring' for monthly incomes.|Click the Checkmark icon when the money actually hits your bank account.|This helps in forecasting future cash flow in the Budget section.",
+
+    help_liab_title: "How to use Liabilities",
+    help_liab_steps: "Track bills, debt repayments, and upcoming expenses here.|These items do NOT affect your account balance until you mark them as 'Paid'.|Overdue items are highlighted in red.|Click the Checkmark icon to pay the bill. This will deduct the amount from the selected source account.|Great for credit card bills and utility payments.",
+
+    help_bud_title: "How to use Budget Forecasts",
+    help_bud_steps: "Create a 'Project' for a large purchase (e.g., 'New Laptop', 'Trip').|Add items to the project with their full cost.|Click 'Configure Payments' on an item to split the cost into future installments.|The charts will show if your accounts will go negative based on your current balance + Receivables - Liabilities - Budget Installments.|Use this to see if you can afford something in the future.",
+
+    help_backup_title: "How to Backup & Restore",
+    help_backup_steps: "Click 'Export Data' to download a secure JSON file containing all your financial history.|Save this file to a cloud drive (Google Drive, iCloud) or email it to yourself for safekeeping.|To restore data on a new device, open the Settings page and click 'Import Data'.|Open your exported JSON file with a text editor, copy all text, and paste it into the box.|Click 'Import & Merge'. This will intelligently update existing records and add new ones.",
+
     // Months (optional overrides if date-fns locale isn't used)
     jan: "Jan", feb: "Feb", mar: "Mar", apr: "Apr", may: "May", jun: "Jun",
     jul: "Jul", aug: "Aug", sep: "Sep", oct: "Oct", nov: "Nov", dec: "Dec"
@@ -206,6 +232,7 @@ export const translations = {
     nav_budget: "අයවැය",
     nav_categories: "වර්ගීකරණ",
     nav_settings: "සකසීම්",
+    nav_guides: "පරිශීලක මාර්ගෝපදේශ",
     local_vault: "දේශීය දත්ත",
     secure_local: "ආරක්ෂිත සහ දේශීය",
     secure_msg: "ඔබගේ මූල්‍ය දත්ත මෙම උපාංගයෙන් පිටතට නොයයි.",
@@ -379,6 +406,10 @@ export const translations = {
     desc_opt: "විස්තරය (විකල්ප)",
     desc_ph: "විස්තරයක් ඇතුලත් කරන්න...",
     
+    // Guides Tab
+    guides_title: "පරිශීලක අත්පොත",
+    guides_subtitle: "SamFinance භාවිතා කරන ආකාරය පිළිබඳ සම්පූර්ණ විස්තර.",
+    
     // Common
     paid: "ගෙවා ඇත",
     received: "ලැබුණි",
@@ -389,6 +420,26 @@ export const translations = {
     select_acc: "ගිණුමක් තෝරන්න...",
     select_date: "දිනය තෝරන්න",
     
+    // Help Guides (Pipe separated steps)
+    help_guide: "භාවිතා කරන ආකාරය",
+    help_acc_title: "ගිණුම් භාවිතා කිරීම",
+    help_acc_steps: "නව ගිණුම් (බැංකු, මුදල්, වත්කම්) සෑදීමට '+ ගිණුමක් එක් කරන්න' ඔබන්න.|ගිණුම් පෙළගැස්වීමට 'ප්‍රධාන ගිණුම' භාවිතා කරන්න (උදා: 'බැංකු' යටතේ 'ඉතිරිකිරීම්').|ඔබට අයිති නැති ගිණුම් සඳහා 'ශුද්ධ වටිනාකමට ඇතුළත් කරන්න' ඉවත් කරන්න.|උප ගිණුම් බැලීමට පේළියක් මත ක්ලික් කරන්න.|ගිණුම් වෙනස් කිරීමට හෝ මැකීමට අයිකන භාවිතා කරන්න.",
+    
+    help_tx_title: "ගනුදෙනු භාවිතා කිරීම",
+    help_tx_steps: "මුදල් හුවමාරු සටහන් කිරීමට '+ ගනුදෙනුවක් එක් කරන්න' ඔබන්න.|වියදම් සඳහා 'වියදම්', ආදායම් සඳහා 'ආදායම්', සහ ගිණුම් අතර මාරු කිරීමට 'මාරු කිරීම්' තෝරන්න.|ඔබට ටැග් කිහිපයක් තෝරා ගත හැක (උදා: 'කෑම' සහ 'විනෝද').|ඉහත සෙවුම් තීරුව භාවිතා කර විස්තරය හෝ ටැග් මගින් ගනුදෙනු සොයන්න.|ගනුදෙනු ඇතුළත් කළ වහාම ගිණුම් ශේෂයන් යාවත්කාලීන වේ.",
+
+    help_rec_title: "ලැබීම් භාවිතා කිරීම",
+    help_rec_steps: "ඔබට ලැබීමට ඇති මුදල් මෙහි සටහන් කරන්න (උදා: වැටුප්, පොලී).|ඔබ 'ලැබුණු බව' සලකුණු කරන තුරු මේවා ගිණුම් ශේෂයට එකතු නොවේ.|මාසික ආදායම් සඳහා 'පුනරාවර්තන' ලෙස සකසන්න.|මුදල් සැබවින්ම ලැබුණු පසු හරි ලකුණ (Checkmark) ඔබන්න.|මෙය අයවැය අංශයේ අනාගත මුදල් ප්‍රවාහය පුරෝකථනය කිරීමට උපකාරී වේ.",
+
+    help_liab_title: "වගකීම් භාවිතා කිරීම",
+    help_liab_steps: "බිල්පත්, ණය ගෙවීම් සහ ඉදිරි වියදම් මෙහි සටහන් කරන්න.|ඔබ 'ගෙවූ බව' සලකුණු කරන තුරු මේවා ගිණුම් ශේෂයෙන් අඩු නොවේ.|කල් ඉකුත් වූ අයිතම රතු පැහැයෙන් දිස්වේ.|බිල්පත ගෙවීමට හරි ලකුණ (Checkmark) ඔබන්න.|ක්‍රෙඩිට් කාඩ් බිල්පත් සහ මාසික ගාස්තු සඳහා මෙය වඩාත් සුදුසුය.",
+
+    help_bud_title: "අයවැය භාවිතා කිරීම",
+    help_bud_steps: "විශාල මිලදී ගැනීමක් සඳහා 'ව්‍යාපෘතියක්' සාදන්න (උදා: 'නව ලැප්ටොප්').|ව්‍යාපෘතියට අයිතම සහ ඒවායේ මුළු වටිනාකම එක් කරන්න.|අනාගත වාරික ලෙස ගෙවීමට 'ගෙවීම් සකසන්න' භාවිතා කරන්න.|දැනට ඇති ශේෂය + ලැබීම් - වගකීම් - අයවැය වාරික මත පදනම්ව ඔබේ ගිණුම් ශේෂය ඍණ වේදැයි ප්‍රස්ථාර මගින් පෙන්වයි.|අනාගතයේදී යමක් මිලදී ගැනීමට හැකිදැයි බැලීමට මෙය භාවිතා කරන්න.",
+
+    help_backup_title: "උපස්ථ සහ ප්‍රතිසාධනය කිරීම",
+    help_backup_steps: "ඔබගේ සියලුම මූල්‍ය ඉතිහාසය අඩංගු ආරක්ෂිත JSON ගොනුවක් ලබා ගැනීමට 'දත්ත ලබාගන්න' (Export) ක්ලික් කරන්න.|මෙම ගොනුව ආරක්ෂිත ස්ථානයක (Google Drive, Email) තබා ගන්න.|නව උපාංගයක දත්ත නැවත ලබා ගැනීමට, සැකසුම් පිටුවට ගොස් 'දත්ත ඇතුලත් කරන්න' (Import) ක්ලික් කරන්න.|ඔබගේ JSON ගොනුව විවෘත කර, එහි ඇති සියලුම දත්ත පිටපත් කර පෙළ පෙට්ටියට අලවන්න.|'ඒකාබද්ධ කරන්න' (Merge) ක්ලික් කරන්න. මෙය පවතින දත්ත යාවත්කාලීන කර නව දත්ත එක් කරයි.",
+
     // Months
     jan: "ජන", feb: " පෙබ", mar: "මාර්තු", apr: "අප්‍රේල්", may: "මැයි", jun: "ජුනි",
     jul: "ජූලි", aug: " අගෝ", sep: "සැප්", oct: "ඔක්", nov: "නොවැ", dec: "දෙසැ"

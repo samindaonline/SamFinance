@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, X } from 'lucide-react';
+import { Plus, Check, Clock, Calendar, AlertCircle, Trash2, ArrowRight, X, Info } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import DatePicker from './DatePicker';
+import HelpModal from './HelpModal';
 
 const Liabilities: React.FC = () => {
   const { liabilities, accounts, addLiability, toggleLiabilityStatus, deleteLiability, formatCurrency } = useFinance();
   const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Animation Handling
   useEffect(() => {
@@ -74,9 +76,18 @@ const Liabilities: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
-        <div>
-           <h2 className="text-2xl font-bold text-slate-800">{t('liab_title')}</h2>
-           <p className="text-slate-500 text-sm">{t('liab_subtitle')}</p>
+        <div className="flex items-start gap-3">
+           <div>
+               <h2 className="text-2xl font-bold text-slate-800">{t('liab_title')}</h2>
+               <p className="text-slate-500 text-sm">{t('liab_subtitle')}</p>
+           </div>
+           <button 
+                onClick={() => setShowHelp(true)}
+                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors mt-1"
+                title="Help Guide"
+            >
+                <Info className="w-5 h-5" />
+            </button>
         </div>
         <button
           onClick={() => setIsAdding(true)}
@@ -86,6 +97,14 @@ const Liabilities: React.FC = () => {
           {t('add_liab')}
         </button>
       </div>
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        titleKey="help_liab_title"
+        contentKey="help_liab_steps"
+      />
 
       {/* Add Form Modal */}
       {(isModalVisible || isAdding) && createPortal(

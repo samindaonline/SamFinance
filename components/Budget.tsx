@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { BudgetProject, BudgetItem, BudgetInstallment, Account, Receivable } from '../types';
-import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, ExternalLink, Calendar, Calculator, AlertTriangle, TrendingDown, TrendingUp, DollarSign, ArrowRight, ArrowDownRight, ArrowUpRight, RefreshCcw, ScrollText, Filter, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
 import { format, endOfMonth, addMonths, isBefore, isSameMonth, isAfter, getDate, isWithinInterval, endOfDay, isSameDay } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DatePicker from './DatePicker';
+import HelpModal from './HelpModal';
 
 // --- Sub-components for better organization ---
 
@@ -68,6 +69,7 @@ const Budget: React.FC = () => {
 
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [activeProject, setActiveProject] = useState<BudgetProject | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Creation Modal State
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -442,9 +444,18 @@ const Budget: React.FC = () => {
       return (
           <div className="space-y-6 pb-20 md:pb-0">
                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="animate-slide-up">
-                        <h2 className="text-2xl font-bold text-slate-800">{t('bud_title')}</h2>
-                        <p className="text-slate-500 text-sm">{t('bud_subtitle')}</p>
+                    <div className="flex items-start gap-3 animate-slide-up">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-800">{t('bud_title')}</h2>
+                            <p className="text-slate-500 text-sm">{t('bud_subtitle')}</p>
+                        </div>
+                        <button 
+                            onClick={() => setShowHelp(true)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors mt-1"
+                            title="Help Guide"
+                        >
+                            <Info className="w-5 h-5" />
+                        </button>
                     </div>
                     <button
                         onClick={() => setCreateModalOpen(true)}
@@ -455,6 +466,13 @@ const Budget: React.FC = () => {
                         {t('create_forecast')}
                     </button>
                </div>
+
+               <HelpModal 
+                    isOpen={showHelp}
+                    onClose={() => setShowHelp(false)}
+                    titleKey="help_bud_title"
+                    contentKey="help_bud_steps"
+                />
 
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {budgetProjects.map((project, idx) => (

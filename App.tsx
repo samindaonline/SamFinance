@@ -10,8 +10,9 @@ import Settings from './components/Settings';
 import Liabilities from './components/Liabilities';
 import Receivables from './components/Receivables';
 import Budget from './components/Budget';
+import Guides from './components/Guides';
 
-type View = 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget';
+type View = 'dashboard' | 'accounts' | 'transactions' | 'liabilities' | 'receivables' | 'categories' | 'settings' | 'budget' | 'guides';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -34,6 +35,8 @@ const App: React.FC = () => {
         return <Budget />;
       case 'settings':
         return <Settings />;
+      case 'guides':
+        return <Guides />;
       default:
         return <Dashboard />;
     }
