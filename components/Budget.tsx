@@ -81,6 +81,10 @@ const Budget: React.FC = () => {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isAddItemModalVisible, setIsAddItemModalVisible] = useState(false);
 
+  // Delete Confirmation State
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{isOpen: boolean, project: BudgetProject | null}>({ isOpen: false, project: null });
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
   useEffect(() => {
       if(isCreateModalOpen) setCreateModalVisible(true);
       else setTimeout(() => setCreateModalVisible(false), 300);
@@ -90,6 +94,11 @@ const Budget: React.FC = () => {
       if(isAddItemModalOpen) setIsAddItemModalVisible(true);
       else setTimeout(() => setIsAddItemModalVisible(false), 300);
   }, [isAddItemModalOpen]);
+
+  useEffect(() => {
+      if(deleteConfirmation.isOpen) setIsDeleteModalVisible(true);
+      else setTimeout(() => setIsDeleteModalVisible(false), 200);
+  }, [deleteConfirmation.isOpen]);
 
   // Editor State
   const [items, setItems] = useState<BudgetItem[]>([]);
@@ -158,10 +167,15 @@ const Budget: React.FC = () => {
     }
   }, [items, activeProject, updateBudgetProject]);
 
-  const deleteProject = (id: string, e: React.MouseEvent) => {
+  const handleDeleteRequest = (project: BudgetProject, e: React.MouseEvent) => {
       e.stopPropagation();
-      if(confirm('Are you sure you want to delete this forecast?')) {
-          deleteBudgetProject(id);
+      setDeleteConfirmation({ isOpen: true, project });
+  };
+
+  const confirmDelete = () => {
+      if(deleteConfirmation.project) {
+          deleteBudgetProject(deleteConfirmation.project.id);
+          setDeleteConfirmation({ isOpen: false, project: null });
       }
   };
 
@@ -492,7 +506,7 @@ const Budget: React.FC = () => {
                             <ProjectCard 
                                 project={project} 
                                 onClick={() => openProject(project)} 
-                                onDelete={(e) => deleteProject(project.id, e)}
+                                onDelete={(e) => handleDeleteRequest(project, e)}
                                 formatCurrency={formatCurrency}
                                 t={t}
                             />
@@ -544,6 +558,43 @@ const Budget: React.FC = () => {
                                </form>
                            </div>
                        </div>
+                   </div>,
+                   document.body
+               )}
+
+               {/* Delete Confirmation Modal */}
+               {(isDeleteModalVisible || deleteConfirmation.isOpen) && createPortal(
+                   <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <div 
+                            className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200 ${deleteConfirmation.isOpen ? 'opacity-100' : 'opacity-0'}`} 
+                            onClick={() => setDeleteConfirmation({ isOpen: false, project: null })} 
+                        />
+                        <div className={`bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 z-10 relative transform transition-all duration-200 ${deleteConfirmation.isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+                            <div className="flex flex-col items-center text-center mb-6">
+                                <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-600 animate-pulse">
+                                    <AlertTriangle className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900">Delete Forecast?</h3>
+                                <p className="text-slate-600 mt-2 text-sm">
+                                    Are you sure you want to delete <span className="font-bold text-slate-800">{deleteConfirmation.project?.name}</span>? This action cannot be undone.
+                                </p>
+                            </div>
+                            
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteConfirmation({ isOpen: false, project: null })}
+                                    className="flex-1 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors active:scale-95 duration-200"
+                                >
+                                    {t('cancel')}
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold transition-colors shadow-lg shadow-rose-200 active:scale-95 duration-200"
+                                >
+                                    {t('delete')}
+                                </button>
+                            </div>
+                        </div>
                    </div>,
                    document.body
                )}
